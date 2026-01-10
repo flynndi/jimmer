@@ -103,7 +103,7 @@ public class MySqlDialect extends MySql5Dialect {
         }
         LockWait wait = forUpdate.getLockWait();
         if (wait == LockWait.NO_WAIT) {
-            builder.sql(" no wait");
+            builder.sql(" nowait");
         } else if (wait == LockWait.SKIP_LOCKED) {
             if (forUpdate.getLockMode().isShared()) {
                 throw new IllegalArgumentException(
