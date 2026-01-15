@@ -631,6 +631,15 @@ class MiddleTableOperator extends AbstractAssociationOperator {
         AffectedRows.add(affectedRowCount, path, rowCount);
     }
 
+    private void addAlias(AbstractSqlBuilder<?> builder) {
+        if (sqlClient.getDialect().isDeleteNeedsAsKeyword()) {
+            builder.sql(" as ");
+        } else {
+            builder.sql(" ");
+        }
+        builder.sql(alias);
+    }
+
     private void addOperation(AbstractSqlBuilder<?> builder, boolean ignoreAlias) {
         if (disconnectingType == DisconnectingType.LOGICAL_DELETE) {
             builder.sql("update ").sql(middleTable.getTableName());
@@ -647,12 +656,12 @@ class MiddleTableOperator extends AbstractAssociationOperator {
         } else {
             builder.sql("delete");
             if (!ignoreAlias && alias != null && sqlClient.getDialect().isDeletedAliasRequired()) {
-                builder.sql(" ").sql(alias);
+                addAlias(builder);
             }
             builder.sql(" from ")
                     .sql(middleTable.getTableName());
             if (!ignoreAlias && alias != null) {
-                builder.sql(" ").sql(alias);
+                addAlias(builder);
             }
         }
     }

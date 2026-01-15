@@ -24,7 +24,8 @@ import org.babyfish.jimmer.sql.meta.impl.LogicalDeletedValueGenerators;
 import org.babyfish.jimmer.sql.runtime.ExecutionPurpose;
 import org.babyfish.jimmer.sql.runtime.SqlBuilder;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 class ChildTableOperator extends AbstractAssociationOperator {
@@ -73,7 +74,7 @@ class ChildTableOperator extends AbstractAssociationOperator {
             );
         }
         DissociateAction dissociateAction =
-                        ctx.options.getDissociateAction(ctx.path.getBackProp());
+                ctx.options.getDissociateAction(ctx.path.getBackProp());
         DisconnectingType disconnectingType;
         switch (dissociateAction) {
             case CHECK:
@@ -85,8 +86,8 @@ class ChildTableOperator extends AbstractAssociationOperator {
             case DELETE:
                 if (ctx.isLogicalDeleted() && (
                         dissociate ||
-                        (ctx.parent != null && ctx.parent.isLogicalDeleted()) ||
-                        !ctx.backProp.isTargetForeignKeyReal(ctx.options.getSqlClient().getMetadataStrategy())
+                                (ctx.parent != null && ctx.parent.isLogicalDeleted()) ||
+                                !ctx.backProp.isTargetForeignKeyReal(ctx.options.getSqlClient().getMetadataStrategy())
                 )) {
                     disconnectingType = DisconnectingType.LOGICAL_DELETE;
                 } else {
@@ -268,20 +269,26 @@ class ChildTableOperator extends AbstractAssociationOperator {
     ) {
         if (disconnectingType == DisconnectingType.PHYSICAL_DELETE) {
             builder.sql("delete from ").sql(tableName);
-            addOperationHeadAlias(builder, depth, "delete");
+            if (depth != 0) {
+                addOperationHeadAlias(builder, depth);
+            }
         } else if (disconnectingType == DisconnectingType.LOGICAL_DELETE) {
             LogicalDeletedInfo logicalDeletedInfo = ctx.path.getType().getLogicalDeletedInfo();
             assert logicalDeletedInfo != null;
             builder.sql("update ").sql(tableName);
-            addOperationHeadAlias(builder, depth, "update");
+            if (depth != 0) {
+                addOperationHeadAlias(builder, depth);
+            }
             builder
                     .enter(AbstractSqlBuilder.ScopeType.SET)
-                    .logicalDeleteAssignment(logicalDeletedInfo, args.logicalDeletedValueRef,null)
+                    .logicalDeleteAssignment(logicalDeletedInfo, args.logicalDeletedValueRef, null)
                     .leave();
         } else {
             builder.sql("update ")
                     .sql(tableName);
-            addOperationHeadAlias(builder, depth, "update");
+            if (depth != 0) {
+                addOperationHeadAlias(builder, depth);
+            }
             builder.enter(AbstractSqlBuilder.ScopeType.SET);
             for (ValueGetter sourceGetter : sourceGetters) {
                 builder.separator()
@@ -294,17 +301,14 @@ class ChildTableOperator extends AbstractAssociationOperator {
 
     private void addOperationHeadAlias(
             AbstractSqlBuilder<?> builder,
-            int depth,
-            String operation
+            int depth
     ) {
-        boolean alias = depth != 0;
-        if (depth == 1 && (operation.equals("delete") && !sqlClient.getDialect().isDeleteAliasSupported() || (operation.equals("update") && !sqlClient.getDialect().isUpdateAliasSupported()))) {
-            alias = false;
+        if (sqlClient.getDialect().isDeleteNeedsAsKeyword()) {
+            builder.sql(" as ");
+        } else {
+            builder.sql(" ");
         }
-
-        if (alias) {
-            builder.sql(" ").sql(alias(depth));
-        }
+        builder.sql(alias(depth));
     }
 
     final void addPredicates(
@@ -465,10 +469,6 @@ class ChildTableOperator extends AbstractAssociationOperator {
             final int previousDepth = depth - 1;
             String alias = alias(previousDepth);
 
-            if (previousDepth == 1 && !sqlClient.getDialect().isDeleteAliasSupported()) {
-                alias = tableName;
-            }
-
             builder.separator()
                     .sql(alias).sql(".")
                     .sql(sourceGetters.get(i))
@@ -491,7 +491,7 @@ class ChildTableOperator extends AbstractAssociationOperator {
                 );
         addDisconnectingConditions(query, query.getTable(), args);
         ConfigurableRootQuery<Table<?>, Object> typedQuery = query.select(
-                ((TableImplementor<?>)query.getTableLikeImplementor()).getId()
+                ((TableImplementor<?>) query.getTableLikeImplementor()).getId()
         );
         if (limit > 0) {
             typedQuery = typedQuery.limit(limit);
@@ -504,7 +504,7 @@ class ChildTableOperator extends AbstractAssociationOperator {
     }
 
     @SuppressWarnings("unchecked")
-    private List<ImmutableSpi> findDisconnectingObjects(DisconnectionArgs  args) {
+    private List<ImmutableSpi> findDisconnectingObjects(DisconnectionArgs args) {
         MutableRootQueryImpl<Table<?>> query =
                 new MutableRootQueryImpl<>(
                         sqlClient,

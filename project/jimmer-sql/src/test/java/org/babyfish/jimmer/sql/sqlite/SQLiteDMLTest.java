@@ -32,14 +32,14 @@ public class SQLiteDMLTest extends AbstractMutationTest {
                 ctx -> {
                     ctx.statement(it -> {
                         it.sql(
-                                "update AUTHOR " +
-                                        "set FIRST_NAME = concat(AUTHOR.FIRST_NAME, ?) " +
+                                "update AUTHOR as tb_1_ " +
+                                        "set FIRST_NAME = concat(tb_1_.FIRST_NAME, ?) " +
                                         "from BOOK_AUTHOR_MAPPING tb_2_ " +
                                         "inner join BOOK tb_3_ on tb_2_.BOOK_ID = tb_3_.ID " +
                                         "inner join BOOK_STORE tb_4_ on " +
                                         "tb_3_.STORE_ID = tb_4_.ID " +
                                         "where " +
-                                        "AUTHOR.ID = tb_2_.AUTHOR_ID " +
+                                        "tb_1_.ID = tb_2_.AUTHOR_ID " +
                                         "and " +
                                         "tb_4_.NAME = ?"
                         );
@@ -87,9 +87,9 @@ public class SQLiteDMLTest extends AbstractMutationTest {
                 ctx -> {
                     ctx.statement(it -> {
                         it.sql(
-                                "update BOOK " +
-                                        "set NAME = concat(BOOK.NAME, ?) " +
-                                        "where lower(BOOK.NAME) like ?"
+                                "update BOOK as tb_1_ " +
+                                        "set NAME = concat(tb_1_.NAME, ?) " +
+                                        "where lower(tb_1_.NAME) like ?"
                         );
                     });
                 }
@@ -108,7 +108,7 @@ public class SQLiteDMLTest extends AbstractMutationTest {
                 }),
                 ctx -> {
                     ctx.statement(it -> {
-                        it.sql("delete from BOOK where BOOK.NAME = ?");
+                        it.sql("delete from BOOK as tb_1_ where tb_1_.NAME = ?");
                         it.variables("Learning GraphQL");
                     });
                     ctx.rowCount(3);
@@ -128,9 +128,9 @@ public class SQLiteDMLTest extends AbstractMutationTest {
                 ctx -> {
                     ctx.statement(it -> {
                         it.sql(
-                                "select distinct BOOK.ID " +
-                                        "from BOOK BOOK " +
-                                        "inner join BOOK_STORE tb_2_ on BOOK.STORE_ID = tb_2_.ID " +
+                                "select distinct tb_1_.ID " +
+                                        "from BOOK tb_1_ " +
+                                        "inner join BOOK_STORE tb_2_ on tb_1_.STORE_ID = tb_2_.ID " +
                                         "where tb_2_.NAME = ?"
                         );
                         it.variables("MANNING");

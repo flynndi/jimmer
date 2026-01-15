@@ -805,15 +805,7 @@ class RealTableImpl extends AbstractDataManager<RealTable.Key, RealTable> implem
         } else {
             middleAlias = null;
         }
-        String alias = stmtCtx.allocateTableAlias();
-        final JSqlClientImplementor sqlClient = statement.getSqlClient();
-        if (alias.equals("tb_1_") && sqlClient != null &&
-                (!sqlClient.getDialect().isUpdateAliasSupported() && stmtCtx.getPurpose().toString().startsWith("UPDATE") ||
-                        (!sqlClient.getDialect().isDeleteAliasSupported() && stmtCtx.getPurpose().toString().startsWith("DELETE")))
-        ) {
-            alias = statement.getType().getTableName(sqlClient.getMetadataStrategy());
-        }
-        this.aliases = new Aliases(alias, middleAlias);
+        this.aliases = new Aliases(stmtCtx.allocateTableAlias(), middleAlias);
     }
 
     private Aliases allocateAliasesIfNecessary() {
