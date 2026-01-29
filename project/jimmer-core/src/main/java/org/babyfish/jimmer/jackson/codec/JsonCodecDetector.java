@@ -21,13 +21,9 @@ class JsonCodecDetector {
     private static JsonCodecProvider loadJsonCodecProvider() {
         ServiceLoader<JsonCodecProvider> serviceLoader = ServiceLoader.load(JsonCodecProvider.class);
         Iterator<JsonCodecProvider> providerIterator = serviceLoader.iterator();
-        return providerIterator.hasNext() ?
-                providerIterator.next() :
-                detectJsonCodecProviderByClasspath();
-    }
-
-    private static JsonCodecProvider detectJsonCodecProviderByClasspath() {
-        if (classExists("tools.jackson.databind.ObjectMapper")) {
+        if (providerIterator.hasNext()) {
+            return providerIterator.next();
+        } else if (classExists("tools.jackson.databind.ObjectMapper")) {
             return new JsonCodecProviderV3();
         } else if (classExists("com.fasterxml.jackson.databind.ObjectMapper")) {
             return new JsonCodecProviderV2();

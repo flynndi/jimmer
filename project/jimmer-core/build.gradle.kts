@@ -13,8 +13,8 @@ dependencies {
     compileOnly(libs.bundles.jackson)
 
     testImplementation(libs.bundles.jackson)
-    testImplementation(libs.mapstruct)
-    testImplementation(libs.lombok)
+    testCompileOnly(libs.mapstruct)
+    testCompileOnly(libs.lombok)
 
     testAnnotationProcessor(projects.jimmerApt)
     testAnnotationProcessor(libs.lombok)

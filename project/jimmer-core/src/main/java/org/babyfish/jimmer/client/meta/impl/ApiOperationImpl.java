@@ -1,22 +1,18 @@
 package org.babyfish.jimmer.client.meta.impl;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.type.CollectionType;
-import com.fasterxml.jackson.databind.type.SimpleType;
 import org.babyfish.jimmer.client.meta.*;
 import org.jetbrains.annotations.Nullable;
 
-import javax.lang.model.element.Element;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-@JsonSerialize(using = ApiOperationImpl.Serializer.class)
-@JsonDeserialize(using = ApiOperationImpl.Deserializer.class)
+@com.fasterxml.jackson.databind.annotation.JsonSerialize(using = ApiOperationImpl.SerializerV2.class)
+@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = ApiOperationImpl.DeserializerV2.class)
+@tools.jackson.databind.annotation.JsonSerialize(using = ApiOperationImpl.SerializerV3.class)
+@tools.jackson.databind.annotation.JsonDeserialize(using = ApiOperationImpl.DeserializerV3.class)
 public class ApiOperationImpl<S> extends AstNode<S> implements ApiOperation {
 
     private String name;
@@ -177,10 +173,12 @@ public class ApiOperationImpl<S> extends AstNode<S> implements ApiOperation {
         this.keyBuilder = null;
     }
 
-    public static class Serializer extends JsonSerializer<ApiOperationImpl<?>> {
+    static class SerializerV2 extends com.fasterxml.jackson.databind.JsonSerializer<ApiOperationImpl<?>> {
 
         @Override
-        public void serialize(ApiOperationImpl<?> operation, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        public void serialize(ApiOperationImpl<?> operation,
+                              com.fasterxml.jackson.core.JsonGenerator gen,
+                              com.fasterxml.jackson.databind.SerializerProvider provider) throws IOException {
             gen.writeStartObject();
             gen.writeFieldName("name");
             gen.writeString(operation.getName());
@@ -210,36 +208,38 @@ public class ApiOperationImpl<S> extends AstNode<S> implements ApiOperation {
         }
     }
 
-    public static class Deserializer extends JsonDeserializer<ApiOperationImpl<?>> {
+    static class DeserializerV2 extends com.fasterxml.jackson.databind.JsonDeserializer<ApiOperationImpl<?>> {
 
-        private static final JavaType TYPE_NAME_LIST_TYPE =
-                CollectionType.construct(
+        private static final com.fasterxml.jackson.databind.JavaType TYPE_NAME_LIST_TYPE =
+                com.fasterxml.jackson.databind.type.CollectionType.construct(
                         List.class,
                         null,
                         null,
                         null,
-                        SimpleType.constructUnsafe(TypeName.class)
+                        com.fasterxml.jackson.databind.type.SimpleType.constructUnsafe(TypeName.class)
                 );
 
-        private static final CollectionType GROUPS_TYPE = CollectionType.construct(
-                List.class,
-                null,
-                null,
-                null,
-                SimpleType.constructUnsafe(String.class)
-        );
+        private static final com.fasterxml.jackson.databind.type.CollectionType GROUPS_TYPE =
+                com.fasterxml.jackson.databind.type.CollectionType.construct(
+                        List.class,
+                        null,
+                        null,
+                        null,
+                        com.fasterxml.jackson.databind.type.SimpleType.constructUnsafe(String.class)
+                );
 
         @SuppressWarnings("unchecked")
         @Override
-        public ApiOperationImpl<?> deserialize(JsonParser jp, DeserializationContext ctx) throws IOException, JacksonException {
-            JsonNode jsonNode = jp.getCodec().readTree(jp);
+        public ApiOperationImpl<?> deserialize(com.fasterxml.jackson.core.JsonParser jp,
+                                               com.fasterxml.jackson.databind.DeserializationContext ctx) throws IOException {
+            com.fasterxml.jackson.databind.JsonNode jsonNode = jp.getCodec().readTree(jp);
             String name = jsonNode.get("name").asText();
             ApiOperationImpl<Object> operation = new ApiOperationImpl<>(null, name);
             operation.setKey(jsonNode.get("key").asText());
             if (jsonNode.has("groups")) {
                 operation.setGroups(
                         Collections.unmodifiableList(
-                            ctx.readTreeAsValue(jsonNode.get("groups"), GROUPS_TYPE)
+                                ctx.readTreeAsValue(jsonNode.get("groups"), GROUPS_TYPE)
                         )
                 );
                 if (!Schemas.isAllowed(ctx, operation.getGroups())) {
@@ -250,7 +250,7 @@ public class ApiOperationImpl<S> extends AstNode<S> implements ApiOperation {
                 operation.setDoc(ctx.readTreeAsValue(jsonNode.get("doc"), Doc.class));
             }
             if (jsonNode.has("parameters")) {
-                for (JsonNode paramNode : jsonNode.get("parameters")) {
+                for (com.fasterxml.jackson.databind.JsonNode paramNode : jsonNode.get("parameters")) {
                     ApiParameterImpl<Object> parameter = ctx.readTreeAsValue(paramNode, ApiParameterImpl.class);
                     operation.addParameter(parameter);
                 }
@@ -260,6 +260,83 @@ public class ApiOperationImpl<S> extends AstNode<S> implements ApiOperation {
             }
             if (jsonNode.has("exceptions")) {
                 List<TypeName> typeNames = ctx.readTreeAsValue(jsonNode.get("exceptions"), TYPE_NAME_LIST_TYPE);
+                operation.setExceptionTypeNames(typeNames);
+            }
+            return operation;
+        }
+    }
+
+    static class SerializerV3 extends tools.jackson.databind.ValueSerializer<ApiOperationImpl<?>> {
+
+        @Override
+        public void serialize(ApiOperationImpl<?> operation,
+                              tools.jackson.core.JsonGenerator gen,
+                              tools.jackson.databind.SerializationContext ctx) {
+            gen.writeStartObject();
+            gen.writeName("name");
+            gen.writeString(operation.getName());
+            gen.writeName("key");
+            gen.writeString(operation.key());
+            if (operation.getGroups() != null) {
+                ctx.defaultSerializeProperty("groups", operation.getGroups(), gen);
+            }
+            if (operation.getDoc() != null) {
+                ctx.defaultSerializeProperty("doc", operation.getDoc(), gen);
+            }
+            if (!operation.getParameters().isEmpty()) {
+                ctx.defaultSerializeProperty("parameters", operation.getParameters(), gen);
+            }
+            if (operation.getReturnType() != null) {
+                ctx.defaultSerializeProperty("returnType", operation.getReturnType(), gen);
+            }
+            if (!operation.getExceptionTypes().isEmpty()) {
+                gen.writeName("exceptions");
+                gen.writeStartArray();
+                for (TypeRef exceptionType : operation.getExceptionTypes()) {
+                    ctx.writeValue(gen, exceptionType.getTypeName());
+                }
+                gen.writeEndArray();
+            }
+            gen.writeEndObject();
+        }
+    }
+
+    static class DeserializerV3 extends tools.jackson.databind.ValueDeserializer<ApiOperationImpl<?>> {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public ApiOperationImpl<?> deserialize(tools.jackson.core.JsonParser jp,
+                                               tools.jackson.databind.DeserializationContext ctx) {
+            tools.jackson.databind.JsonNode jsonNode = ctx.readTree(jp);
+            String name = jsonNode.get("name").asText();
+            ApiOperationImpl<Object> operation = new ApiOperationImpl<>(null, name);
+            operation.setKey(jsonNode.get("key").asText());
+            if (jsonNode.has("groups")) {
+                operation.setGroups(
+                        Collections.unmodifiableList(
+                                ctx.readTreeAsValue(jsonNode.get("groups"),
+                                        ctx.getTypeFactory().constructCollectionType(List.class, String.class))
+                        )
+                );
+                if (!Schemas.isAllowed(ctx, operation.getGroups())) {
+                    return operation;
+                }
+            }
+            if (jsonNode.has("doc")) {
+                operation.setDoc(ctx.readTreeAsValue(jsonNode.get("doc"), Doc.class));
+            }
+            if (jsonNode.has("parameters")) {
+                for (tools.jackson.databind.JsonNode paramNode : jsonNode.get("parameters")) {
+                    ApiParameterImpl<Object> parameter = ctx.readTreeAsValue(paramNode, ApiParameterImpl.class);
+                    operation.addParameter(parameter);
+                }
+            }
+            if (jsonNode.has("returnType")) {
+                operation.setReturnType(ctx.readTreeAsValue(jsonNode.get("returnType"), TypeRefImpl.class));
+            }
+            if (jsonNode.has("exceptions")) {
+                List<TypeName> typeNames = ctx.readTreeAsValue(jsonNode.get("exceptions"),
+                        ctx.getTypeFactory().constructCollectionType(List.class, TypeName.class));
                 operation.setExceptionTypeNames(typeNames);
             }
             return operation;

@@ -15,7 +15,6 @@ dependencies {
     kspTest(libs.bundles.jackson)
 
     testImplementation(libs.bundles.jackson)
-
     testImplementation(libs.h2)
     testImplementation(libs.mysql.connector.java)
     testImplementation(libs.postgresql)

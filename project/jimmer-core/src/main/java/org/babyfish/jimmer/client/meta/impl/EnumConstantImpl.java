@@ -1,18 +1,14 @@
 package org.babyfish.jimmer.client.meta.impl;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.babyfish.jimmer.client.meta.Doc;
 import org.babyfish.jimmer.client.meta.EnumConstant;
 
 import java.io.IOException;
 
-@JsonSerialize(using = EnumConstantImpl.Serializer.class)
-@JsonDeserialize(using = EnumConstantImpl.Deserializer.class)
+@com.fasterxml.jackson.databind.annotation.JsonSerialize(using = EnumConstantImpl.SerializerV2.class)
+@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = EnumConstantImpl.DeserializerV2.class)
+@tools.jackson.databind.annotation.JsonSerialize(using = EnumConstantImpl.SerializerV3.class)
+@tools.jackson.databind.annotation.JsonDeserialize(using = EnumConstantImpl.DeserializerV3.class)
 public class EnumConstantImpl<S> extends AstNode<S> implements EnumConstant {
 
     private final String name;
@@ -44,10 +40,12 @@ public class EnumConstantImpl<S> extends AstNode<S> implements EnumConstant {
         visitor.visitedAstNode(this);
     }
 
-    public static class Serializer extends JsonSerializer<EnumConstantImpl<?>> {
+    static class SerializerV2 extends com.fasterxml.jackson.databind.JsonSerializer<EnumConstantImpl<?>> {
 
         @Override
-        public void serialize(EnumConstantImpl<?> constant, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        public void serialize(EnumConstantImpl<?> constant,
+                              com.fasterxml.jackson.core.JsonGenerator gen,
+                              com.fasterxml.jackson.databind.SerializerProvider provider) throws IOException {
             gen.writeStartObject();
             provider.defaultSerializeField("name", constant.getName(), gen);
             if (constant.getDoc() != null) {
@@ -57,11 +55,39 @@ public class EnumConstantImpl<S> extends AstNode<S> implements EnumConstant {
         }
     }
 
-    public static class Deserializer extends JsonDeserializer<EnumConstantImpl<?>> {
+    static class DeserializerV2 extends com.fasterxml.jackson.databind.JsonDeserializer<EnumConstantImpl<?>> {
 
         @Override
-        public EnumConstantImpl<?> deserialize(JsonParser jp, DeserializationContext ctx) throws IOException, JacksonException {
-            JsonNode jsonNode = jp.getCodec().readTree(jp);
+        public EnumConstantImpl<?> deserialize(com.fasterxml.jackson.core.JsonParser jp,
+                                               com.fasterxml.jackson.databind.DeserializationContext ctx) throws IOException {
+            com.fasterxml.jackson.databind.JsonNode jsonNode = jp.getCodec().readTree(jp);
+            EnumConstantImpl<Object> constant = new EnumConstantImpl<>(null, jsonNode.get("name").asText());
+            constant.setDoc(ctx.readTreeAsValue(jsonNode.get("doc"), Doc.class));
+            return constant;
+        }
+    }
+
+    static class SerializerV3 extends tools.jackson.databind.ValueSerializer<EnumConstantImpl<?>> {
+
+        @Override
+        public void serialize(EnumConstantImpl<?> constant,
+                              tools.jackson.core.JsonGenerator gen,
+                              tools.jackson.databind.SerializationContext ctx) {
+            gen.writeStartObject();
+            ctx.defaultSerializeProperty("name", constant.getName(), gen);
+            if (constant.getDoc() != null) {
+                ctx.defaultSerializeProperty("doc", constant.getDoc(), gen);
+            }
+            gen.writeEndObject();
+        }
+    }
+
+    static class DeserializerV3 extends tools.jackson.databind.ValueDeserializer<EnumConstantImpl<?>> {
+
+        @Override
+        public EnumConstantImpl<?> deserialize(tools.jackson.core.JsonParser jp,
+                                               tools.jackson.databind.DeserializationContext ctx) {
+            tools.jackson.databind.JsonNode jsonNode = ctx.readTree(jp);
             EnumConstantImpl<Object> constant = new EnumConstantImpl<>(null, jsonNode.get("name").asText());
             constant.setDoc(ctx.readTreeAsValue(jsonNode.get("doc"), Doc.class));
             return constant;

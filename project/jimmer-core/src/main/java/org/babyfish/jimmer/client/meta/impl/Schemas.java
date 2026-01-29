@@ -1,6 +1,5 @@
 package org.babyfish.jimmer.client.meta.impl;
 
-import com.fasterxml.jackson.databind.DeserializationContext;
 import org.babyfish.jimmer.client.meta.Schema;
 import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.jackson.codec.JsonWriter;
@@ -12,7 +11,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import static java.util.Collections.singletonMap;
-import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule;
 
 public class Schemas {
 
@@ -20,10 +19,10 @@ public class Schemas {
 
     private static final Object GROUPS = new Object();
 
-    private static final JsonCodec<?> READ_SERVICES_JSON_CODEC = jsonCodec()
+    private static final JsonCodec<?> READ_SERVICES_JSON_CODEC = jsonCodecWithoutImmutableModule()
             .withCustomizations(new SharedAttributesCustomization(singletonMap(IGNORE_DEFINITIONS, true)));
 
-    private static final JsonWriter WRITER = jsonCodec().writer().withDefaultPrettyPrinter();
+    private static final JsonWriter WRITER = jsonCodecWithoutImmutableModule().writer().withDefaultPrettyPrinter();
 
     private Schemas() {
     }
@@ -37,7 +36,7 @@ public class Schemas {
     }
 
     public static Schema readFrom(Reader reader, Set<String> groups) throws Exception {
-        return jsonCodec()
+        return jsonCodecWithoutImmutableModule()
                 .withCustomizations(new SharedAttributesCustomization(singletonMap(GROUPS, groups)))
                 .readerFor(SchemaImpl.class)
                 .read(reader);
@@ -48,11 +47,19 @@ public class Schemas {
     }
 
     @SuppressWarnings("unchecked")
-    static boolean isAllowed(DeserializationContext ctx, Collection<String> elementGroups) {
+    static boolean isAllowed(com.fasterxml.jackson.databind.DeserializationContext ctx, Collection<String> elementGroups) {
+        return isAllowed(elementGroups, (Set<String>) ctx.getAttribute(GROUPS));
+    }
+
+    @SuppressWarnings("unchecked")
+    static boolean isAllowed(tools.jackson.databind.DeserializationContext ctx, Collection<String> elementGroups) {
+        return isAllowed(elementGroups, (Set<String>) ctx.getAttribute(GROUPS));
+    }
+
+    private static boolean isAllowed(Collection<String> elementGroups, Set<String> allowedGroups) {
         if (elementGroups == null) {
             return true;
         }
-        Set<String> allowedGroups = (Set<String>) ctx.getAttribute(GROUPS);
         if (allowedGroups == null) {
             return true;
         }

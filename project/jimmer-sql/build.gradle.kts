@@ -26,7 +26,7 @@ dependencies {
         exclude("com.ibm.icu", "icu4j")
     }
 
-    testImplementation(libs.lombok)
+    testCompileOnly(libs.lombok)
     testAnnotationProcessor(libs.lombok)
     testAnnotationProcessor(libs.bundles.jackson)
     testAnnotationProcessor(projects.jimmerApt)
