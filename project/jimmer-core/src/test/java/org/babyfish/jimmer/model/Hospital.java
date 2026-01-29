@@ -6,6 +6,4 @@ import org.babyfish.jimmer.Immutable;
 public interface Hospital {
 
     String Name();
-
-    boolean ISPublic();
 }
