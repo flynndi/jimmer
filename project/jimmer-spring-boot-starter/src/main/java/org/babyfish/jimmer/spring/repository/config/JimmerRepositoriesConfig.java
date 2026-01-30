@@ -6,18 +6,19 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(
         prefix = "spring.data.jimmer.repositories",
         name = "enabled",
         havingValue = "true",
         matchIfMissing = true
 )
-@ConditionalOnMissingBean({ JimmerRepositoryFactoryBean.class, JimmerRepositoryConfigExtension.class })
+@ConditionalOnMissingBean({JimmerRepositoryFactoryBean.class, JimmerRepositoryConfigExtension.class})
 public class JimmerRepositoriesConfig {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnMissingBean(JimmerRepositoryConfigExtension.class)
     @Import(JimmerRepositoriesRegistrar.class)
-    static class JimmerRepositoriesConfiguration {}
+    static class JimmerRepositoriesConfiguration {
+    }
 }

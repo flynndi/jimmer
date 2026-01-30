@@ -8,7 +8,6 @@ dependencies {
     api(projects.jimmerSqlKotlin)
     api(projects.jimmerClient)
     api(libs.spring.boot.starter.jdbc)
-    api(libs.spring.boot.starter.json)
     api(libs.spring.data.commons)
 
     compileOnly(libs.spring.boot.starter.web)

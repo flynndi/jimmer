@@ -11,7 +11,7 @@ import java.util.List;
 
 @ConditionalOnBean(TransactionCacheOperator.class)
 @EnableScheduling
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class TransactionCacheOperatorFlusherConfig {
 
     @Bean
