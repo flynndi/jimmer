@@ -5,10 +5,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
 
-@AutoConfiguration(afterName = {
-        "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration",
-        "org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration"
-})
+@AutoConfiguration
 @EnableConfigurationProperties(JimmerProperties.class)
 @Import({
         SqlClientConfig.class,
