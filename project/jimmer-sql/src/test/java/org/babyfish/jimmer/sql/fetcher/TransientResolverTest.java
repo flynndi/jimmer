@@ -112,6 +112,44 @@ public class TransientResolverTest extends AbstractQueryTest {
     }
 
     @Test
+    public void testTypedNameWithVersion() {
+        executeAndExpect(
+                getLambdaClient().createQuery(BookStoreTable.class, (q, store) -> {
+                    return q.select(
+                            store.fetch(
+                                    BookStoreFetcher.$
+                                            .allScalarFields()
+                                            .nameWithVersion()
+                            )
+                    );
+                }),
+                ctx -> {
+                    ctx.sql(
+                            "select tb_1_.ID, tb_1_.NAME, tb_1_.WEBSITE, tb_1_.VERSION " +
+                                    "from BOOK_STORE tb_1_"
+                    );
+                    ctx.rows(
+                            "[" +
+                                    "--->{" +
+                                    "--->--->\"id\":\"d38c10da-6be8-4924-b9b9-5e81899612a0\"," +
+                                    "--->--->\"name\":\"O'REILLY\"," +
+                                    "--->--->\"website\":null," +
+                                    "--->--->\"version\":0," +
+                                    "--->--->\"nameWithVersion\":\"O'REILLY#0\"" +
+                                    "--->},{" +
+                                    "--->--->\"id\":\"2fa3955e-3e83-49b9-902e-0465c109c779\"," +
+                                    "--->--->\"name\":\"MANNING\"," +
+                                    "--->--->\"website\":null," +
+                                    "--->--->\"version\":0," +
+                                    "--->--->\"nameWithVersion\":\"MANNING#0\"" +
+                                    "--->}" +
+                                    "]"
+                    );
+                }
+        );
+    }
+
+    @Test
     public void testMostPopularAuthorWithDeepFetcher() {
         executeAndExpect(
                 getLambdaClient().createQuery(BookStoreTable.class, (q, store) -> {
