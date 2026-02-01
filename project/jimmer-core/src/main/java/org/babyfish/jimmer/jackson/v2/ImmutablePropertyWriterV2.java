@@ -1,4 +1,4 @@
-package org.babyfish.jimmer.jackson;
+package org.babyfish.jimmer.jackson.v2;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -6,11 +6,11 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import org.babyfish.jimmer.meta.PropId;
 import org.babyfish.jimmer.runtime.ImmutableSpi;
 
-class ImmutablePropertyWriter extends BeanPropertyWriter {
+class ImmutablePropertyWriterV2 extends BeanPropertyWriter {
 
     private final PropId propId;
 
-    public ImmutablePropertyWriter(BeanPropertyWriter base, PropId propId) {
+    public ImmutablePropertyWriterV2(BeanPropertyWriter base, PropId propId) {
         super(base);
         this.propId = propId;
     }

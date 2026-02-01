@@ -12,15 +12,14 @@ dependencies {
 
     testImplementation(libs.kotlin.test)
     kspTest(projects.jimmerKsp)
-    testAnnotationProcessor(projects.jimmerKsp)
+    kspTest(libs.bundles.jackson)
 
+    testImplementation(libs.bundles.jackson)
     testImplementation(libs.h2)
     testImplementation(libs.mysql.connector.java)
     testImplementation(libs.postgresql)
     testImplementation(libs.javax.validation.api)
-    testImplementation(libs.jackson.datatype.jsr310)
     testImplementation(libs.spring.jdbc)
-    testImplementation(libs.jackson.module.kotlin)
     testImplementation(libs.hibernate.validation)
     testImplementation(libs.caffeine)
     testImplementation("com.alibaba:easyexcel:4.0.3")
@@ -29,6 +28,7 @@ dependencies {
 ksp {
     arg("jimmer.dto.mutable", "true")
     arg("jimmer.dto.hibernateValidatorEnhancement", "true")
+//    arg("jimmer.jackson3", "true")
 }
 
 kotlin {

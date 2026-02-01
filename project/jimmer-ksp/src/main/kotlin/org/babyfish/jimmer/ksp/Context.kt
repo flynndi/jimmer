@@ -38,8 +38,10 @@ class Context(
     val isBuddyIgnoreResourceGeneration: Boolean =
         environment.options["jimmer.buddy.ignoreResourceGeneration"]?.trim() == "true"
 
+    val jackson3 = detectIsJackson3(resolver, environment)
+
     val jacksonTypes: JacksonTypes =
-        if (jackson3(resolver, environment)) {
+        if (jackson3) {
             JacksonTypes(
                 jsonIgnore = ClassName("com.fasterxml.jackson.annotation", "JsonIgnore"),
                 jsonValue = ClassName("com.fasterxml.jackson.annotation", "JsonValue"),
@@ -47,13 +49,13 @@ class Context(
                 jsonProperty = ClassName("com.fasterxml.jackson.annotation", "JsonProperty"),
                 jsonPropertyOrder = ClassName("com.fasterxml.jackson.annotation", "JsonPropertyOrder"),
                 jsonCreator = ClassName("com.fasterxml.jackson.annotation", "JsonCreator"),
-                jsonSerializer = ClassName("tools.jackson.databind", "JsonSerializer"),
+                jsonSerializer = ClassName("tools.jackson.databind", "ValueSerializer"),
                 jsonSerialize = ClassName("tools.jackson.databind.annotation", "JsonSerialize"),
                 jsonDeserialize = ClassName("tools.jackson.databind.annotation", "JsonDeserialize"),
                 jsonPojoBuilder = ClassName("tools.jackson.databind.annotation", "JsonPOJOBuilder"),
                 jsonNaming = ClassName("tools.jackson.databind.annotation", "JsonNaming"),
                 jsonGenerator = ClassName("tools.jackson.core", "JsonGenerator"),
-                serializeProvider = ClassName("tools.jackson.databind", "SerializerProvider")
+                serializeProvider = ClassName("tools.jackson.databind", "SerializationContext")
             )
         } else {
             JacksonTypes(
@@ -145,13 +147,13 @@ class Context(
             Embeddable::class
         )
 
-        private fun jackson3(resolver: Resolver, environmnet: SymbolProcessorEnvironment): Boolean =
-            environmnet.options["jimmer.jackson3"].let {
-                if (it.isNullOrEmpty()) {
-                    false//resolver.getClassDeclarationByName("tools.jackson.annotation.JsonIgnore") != null
-                } else {
-                    "true" == it
-                }
+        private fun detectIsJackson3(resolver: Resolver, environment: SymbolProcessorEnvironment): Boolean {
+            val jackson3Text = environment.options["jimmer.jackson3"]
+            return if (jackson3Text.isNullOrEmpty()) {
+                resolver.getClassDeclarationByName("tools.jackson.databind.ObjectMapper") != null
+            } else {
+                "true" == jackson3Text
             }
+        }
     }
 }

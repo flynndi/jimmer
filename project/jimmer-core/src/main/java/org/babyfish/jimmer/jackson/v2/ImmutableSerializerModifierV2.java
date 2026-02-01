@@ -1,9 +1,9 @@
-package org.babyfish.jimmer.jackson.v3;
+package org.babyfish.jimmer.jackson.v2;
 
-import tools.jackson.databind.BeanDescription;
-import tools.jackson.databind.SerializationConfig;
-import tools.jackson.databind.ser.BeanPropertyWriter;
-import tools.jackson.databind.ser.ValueSerializerModifier;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
+import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import org.babyfish.jimmer.jackson.ImmutableProps;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
@@ -13,13 +13,13 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.ListIterator;
 
-class ImmutableSerializerModifier3 extends ValueSerializerModifier {
+class ImmutableSerializerModifierV2 extends BeanSerializerModifier {
 
     @Override
     public List<BeanPropertyWriter> changeProperties(
-            final SerializationConfig config,
-            final BeanDescription.Supplier beanDesc,
-            final List<BeanPropertyWriter> beanProperties
+            SerializationConfig config,
+            BeanDescription beanDesc,
+            List<BeanPropertyWriter> beanProperties
     ) {
         ImmutableType type = ImmutableType.tryGet(beanDesc.getBeanClass());
         if (type == null) {
@@ -35,7 +35,7 @@ class ImmutableSerializerModifier3 extends ValueSerializerModifier {
             }
             Method method = (Method) member;
             ImmutableProp prop = ImmutableProps.get(type, method);
-            itr.set(new ImmutablePropertyWriter3(writer, prop.getId()));
+            itr.set(new ImmutablePropertyWriterV2(writer, prop.getId()));
         }
         return beanProperties;
     }

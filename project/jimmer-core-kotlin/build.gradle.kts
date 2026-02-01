@@ -12,8 +12,12 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mapstruct)
     testImplementation(libs.javax.validation.api)
-    testImplementation(libs.jackson.databind)
+
+    testImplementation(libs.jackson.annotations)
+    testRuntimeOnly(libs.bundles.jackson)
+
     kspTest(projects.jimmerKsp)
+    kspTest(libs.bundles.jackson)
 }
 
 kotlin {

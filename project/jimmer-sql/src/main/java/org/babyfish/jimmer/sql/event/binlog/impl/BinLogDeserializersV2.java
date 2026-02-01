@@ -7,11 +7,11 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.deser.Deserializers;
 import org.babyfish.jimmer.meta.ImmutableType;
 
-class BinLogDeserializers extends Deserializers.Base {
+class BinLogDeserializersV2 extends Deserializers.Base {
 
     private final BinLogParser parser;
 
-    BinLogDeserializers(BinLogParser parser) {
+    BinLogDeserializersV2(BinLogParser parser) {
         this.parser = parser;
     }
 
@@ -23,7 +23,7 @@ class BinLogDeserializers extends Deserializers.Base {
     ) {
         ImmutableType immutableType = ImmutableType.tryGet(type.getRawClass());
         if (immutableType != null) {
-            return new BinLogDeserializer(parser, immutableType);
+            return new BinLogDeserializerV2(parser, immutableType);
         }
         return null;
     }

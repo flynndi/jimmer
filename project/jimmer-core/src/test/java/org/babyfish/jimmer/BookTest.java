@@ -1,11 +1,9 @@
 package org.babyfish.jimmer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.babyfish.jimmer.model.Book;
 import org.babyfish.jimmer.model.BookDraft;
 import org.babyfish.jimmer.model.BookProps;
 import org.babyfish.jimmer.model.Immutables;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,7 +12,7 @@ public class BookTest {
 
     @Test
     public void testBaseObjectShouldRemainUnchangedAfterCreatingDerivedObject() {
-        
+
         Book original = BookDraft.$.produce(draft -> {
             draft.setName("original");
             draft.setPrice(1);
@@ -29,7 +27,7 @@ public class BookTest {
             DraftObjects.show(draft, BookProps.NAME);
         });
 
-        
+
         assertEquals("{\"price\":1}", originalState);
         assertEquals("{\"name\":\"modified\",\"price\":2}", modified.toString());
 
@@ -70,7 +68,7 @@ public class BookTest {
     }
 
     @Test
-    public void test() throws JsonProcessingException {
+    public void test() throws Exception {
 
         Book book = BookDraft.$.produce(b -> {
             b.setName("book");

@@ -1,9 +1,6 @@
 package org.babyfish.jimmer.sql.event.binlog.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.babyfish.jimmer.jackson.codec.Node;
 import org.babyfish.jimmer.meta.EmbeddedLevel;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.PropId;
@@ -14,41 +11,23 @@ import org.babyfish.jimmer.sql.event.binlog.BinLogPropReader;
 import org.babyfish.jimmer.sql.exception.ExecutionException;
 import org.babyfish.jimmer.sql.runtime.ScalarProvider;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.temporal.Temporal;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 import static org.babyfish.jimmer.sql.ScalarProviderUtils.getSqlType;
 
 class ValueParser {
-
-    private static final Map<Class<?>, Caster> CASTER_MAP =
-            new CasterMapBuilder()
-                    .add(boolean.class, Boolean.class, JsonNode::asBoolean)
-                    .add(char.class, Character.class, valueNode -> valueNode.asText().charAt(0))
-                    .add(byte.class, Byte.class, valueNode -> (byte)valueNode.asInt())
-                    .add(short.class, Short.class, valueNode -> (short)valueNode.asInt())
-                    .add(int.class, Integer.class, JsonNode::asInt)
-                    .add(long.class, Long.class, JsonNode::asLong)
-                    .add(float.class, Float.class, valueNode -> (float)valueNode.asDouble())
-                    .add(double.class, Double.class, JsonNode::asDouble)
-                    .add(BigInteger.class, valueNode -> new BigInteger(valueNode.asText()))
-                    .add(BigDecimal.class, valueNode -> new BigDecimal(valueNode.asText()))
-                    .add(String.class, JsonNode::asText)
-                    .add(UUID.class, valueNode -> UUID.fromString(valueNode.asText()))
-                    .build();
-
     private static final Object ILLEGAL_VALUE = new Object();
 
-    private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
-
-    private ValueParser() {}
+    private ValueParser() {
+    }
 
     public static void addEntityProp(
             DraftSpi spi,
             List<ImmutableProp> chain,
-            JsonNode jsonNode,
+            Node node,
             BinLogParser parser
     ) {
         ImmutableProp entityProp = chain.get(0);
@@ -63,7 +42,7 @@ class ValueParser {
                 } else {
                     Object value = ValueParser.parseSingleValue(
                             parser,
-                            jsonNode,
+                            node,
                             prop,
                             true
                     );
@@ -78,7 +57,7 @@ class ValueParser {
                 ImmutableProp targetIdProp = entityProp.getTargetType().getIdProp();
                 Object valueId = ValueParser.parseSingleValue(
                         parser,
-                        jsonNode,
+                        node,
                         targetIdProp,
                         false
                 );
@@ -97,7 +76,7 @@ class ValueParser {
             } else {
                 value = ValueParser.parseSingleValue(
                         parser,
-                        jsonNode,
+                        node,
                         entityProp,
                         true
                 );
@@ -111,16 +90,16 @@ class ValueParser {
     @SuppressWarnings("unchecked")
     public static Object parseSingleValue(
             BinLogParser parser,
-            JsonNode jsonNode,
+            Node node,
             ImmutableProp prop,
             boolean useScalarProvider
     ) {
-        if (jsonNode.isNull()) {
+        if (node.isNull()) {
             return null;
         }
         BinLogPropReader reader = parser.reader(prop);
         if (reader != null) {
-            return reader.read(prop, jsonNode);
+            return reader.read(prop, node);
         }
         Class<?> javaType = prop.getElementClass();
         ScalarProvider<Object, Object> provider =
@@ -134,7 +113,7 @@ class ValueParser {
         if (Date.class.isAssignableFrom(sqlType) || Temporal.class.isAssignableFrom(sqlType)) {
             return ILLEGAL_VALUE;
         }
-        Object value = valueOf(jsonNode, sqlType);
+        Object value = valueOf(node, sqlType);
         if (provider != null && value != null) {
             try {
                 return provider.toScalar(value);
@@ -152,18 +131,17 @@ class ValueParser {
         return value;
     }
 
-    static Object valueOrError(JsonNode node, Class<?> type) {
+    static Object valueOrError(Node node, Class<?> type) {
         if (node.isNull()) {
             return null;
         }
-        Caster caster = CASTER_MAP.get(type);
-        if (caster != null) {
-            return caster.cast(node);
+        if (node.canCastTo(type)) {
+            return node.castTo(type);
         }
         try {
-            return MAPPER.readValue(node.toString(), type);
-        } catch (JsonProcessingException ex) {
-            throw new IllegalArgumentException("Cannot parse  \"" +
+            return node.convertTo(type, jsonCodec().converter());
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Cannot convert  \"" +
                     node +
                     "\" to value whose type is \"" +
                     type.getName() +
@@ -172,42 +150,17 @@ class ValueParser {
         }
     }
 
-    private static Object valueOf(JsonNode node, Class<?> type) {
+    private static Object valueOf(Node node, Class<?> type) {
         if (node.isNull()) {
             return null;
         }
-        Caster caster = CASTER_MAP.get(type);
-        if (caster != null) {
-            return caster.cast(node);
+        if (node.canCastTo(type)) {
+            return node.castTo(type);
         }
         try {
-            return MAPPER.readValue(node.toString(), type);
-        } catch (JsonProcessingException ex) {
+            return node.convertTo(type, jsonCodec().converter());
+        } catch (Exception ex) {
             return ILLEGAL_VALUE;
         }
-    }
-
-    private static class CasterMapBuilder {
-
-        private Map<Class<?>, Caster> map = new HashMap<>();
-
-        public CasterMapBuilder add(Class<?> type, Caster caster) {
-            map.put(type, caster);
-            return this;
-        }
-
-        public CasterMapBuilder add(Class<?> type1, Class<?> type2, Caster caster) {
-            map.put(type1, caster);
-            map.put(type2, caster);
-            return this;
-        }
-
-        public Map<Class<?>, Caster> build() {
-            return map;
-        }
-    }
-
-    private interface Caster {
-        Object cast(JsonNode valueNode);
     }
 }

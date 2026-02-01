@@ -1,7 +1,6 @@
 package org.babyfish.jimmer.jackson;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @see LongToStringConverter

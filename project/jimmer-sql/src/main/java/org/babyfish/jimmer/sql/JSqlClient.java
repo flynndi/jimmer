@@ -1,18 +1,25 @@
 package org.babyfish.jimmer.sql;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.lang.NewChain;
 import org.babyfish.jimmer.lang.OldChain;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.TypedProp;
 import org.babyfish.jimmer.sql.association.meta.AssociationType;
 import org.babyfish.jimmer.sql.ast.mutation.*;
-import org.babyfish.jimmer.sql.ast.query.*;
+import org.babyfish.jimmer.sql.ast.query.MutableBaseQuery;
+import org.babyfish.jimmer.sql.ast.query.MutableRecursiveBaseQuery;
+import org.babyfish.jimmer.sql.ast.query.MutableRootQuery;
+import org.babyfish.jimmer.sql.ast.query.SubQueryProvider;
 import org.babyfish.jimmer.sql.ast.table.*;
 import org.babyfish.jimmer.sql.ast.table.Table;
 import org.babyfish.jimmer.sql.ast.table.spi.TableProxy;
 import org.babyfish.jimmer.sql.cache.*;
-import org.babyfish.jimmer.sql.di.*;
+import org.babyfish.jimmer.sql.di.AopProxyProvider;
+import org.babyfish.jimmer.sql.di.LogicalDeletedValueGeneratorProvider;
+import org.babyfish.jimmer.sql.di.TransientResolverProvider;
+import org.babyfish.jimmer.sql.di.UserIdGeneratorProvider;
+import org.babyfish.jimmer.sql.dialect.Dialect;
 import org.babyfish.jimmer.sql.event.TriggerType;
 import org.babyfish.jimmer.sql.event.Triggers;
 import org.babyfish.jimmer.sql.event.binlog.BinLog;
@@ -24,7 +31,6 @@ import org.babyfish.jimmer.sql.filter.Filter;
 import org.babyfish.jimmer.sql.filter.FilterConfig;
 import org.babyfish.jimmer.sql.filter.Filters;
 import org.babyfish.jimmer.sql.meta.DatabaseNamingStrategy;
-import org.babyfish.jimmer.sql.dialect.Dialect;
 import org.babyfish.jimmer.sql.meta.DatabaseSchemaStrategy;
 import org.babyfish.jimmer.sql.meta.IdGenerator;
 import org.babyfish.jimmer.sql.meta.MetaStringResolver;
@@ -73,13 +79,14 @@ public interface JSqlClient extends SubQueryProvider, DeprecatedMoreSaveOperatio
 
     <SE, ST extends Table<SE>, TE, TT extends Table<TE>>
     MutableRootQuery<AssociationTable<SE, ST, TE, TT>> createAssociationQuery(
-            AssociationTable<SE,ST, TE, TT> table
+            AssociationTable<SE, ST, TE, TT> table
     );
 
     Entities getEntities();
 
     /**
      * This method is equivalent to `getTriggers(false)`
+     *
      * @return
      */
     Triggers getTriggers();
@@ -106,6 +113,7 @@ public interface JSqlClient extends SubQueryProvider, DeprecatedMoreSaveOperatio
      *         Note that the objects returned by different parameters are independent of each other.
      *     </li>
      * </ul>
+     *
      * @param transaction
      * @return Trigger
      */
@@ -256,7 +264,7 @@ public interface JSqlClient extends SubQueryProvider, DeprecatedMoreSaveOperatio
      * </ul>
      *
      * @param propagation The propagation behavior
-     * @param block The action to be executed in transaction
+     * @param block       The action to be executed in transaction
      * @return The result of transaction
      */
     <R> R transaction(Propagation propagation, Supplier<R> block);
@@ -364,16 +372,16 @@ public interface JSqlClient extends SubQueryProvider, DeprecatedMoreSaveOperatio
         Builder addPropScalarProviderFactory(PropScalarProviderFactory factory);
 
         @OldChain
-        Builder setDefaultSerializedTypeObjectMapper(ObjectMapper mapper);
+        Builder setDefaultSerializedTypeJsonCodec(JsonCodec<?> jsonCodec);
 
         @OldChain
-        Builder setSerializedTypeObjectMapper(Class<?> type, ObjectMapper mapper);
+        Builder setSerializedTypeJsonCodec(Class<?> type, JsonCodec<?> jsonCodec);
 
         @OldChain
-        Builder setSerializedPropObjectMapper(TypedProp<?, ?> prop, ObjectMapper mapper);
+        Builder setSerializedPropJsonCodec(TypedProp<?, ?> prop, JsonCodec<?> jsonCodec);
 
         @OldChain
-        Builder setSerializedPropObjectMapper(ImmutableProp prop, ObjectMapper mapper);
+        Builder setSerializedPropJsonCodec(ImmutableProp prop, JsonCodec<?> jsonCodec);
 
         @OldChain
         Builder setDefaultJsonProviderCreator(Function<ImmutableProp, ScalarProvider<?, ?>> creator);
@@ -404,13 +412,13 @@ public interface JSqlClient extends SubQueryProvider, DeprecatedMoreSaveOperatio
 
         /**
          * For RDBMS, pagination is slow if `offset` is large, especially for MySQL.
-         *
+         * <p>
          * If `offset` >= $thisArgument
          *
          * <pre>{@code
          *  select t.* from Table t ... limit ? offset ?
          * }</pre>
-         *
+         * <p>
          * will be automatically changed to
          *
          * <pre>{@code
@@ -505,7 +513,7 @@ public interface JSqlClient extends SubQueryProvider, DeprecatedMoreSaveOperatio
         @OldChain
         Builder addDraftInterceptors(Collection<? extends DraftInterceptor<?, ?>> interceptors);
 
-        Builder setDefaultBinLogObjectMapper(ObjectMapper mapper);
+        Builder setDefaultBinLogJsonCodec(JsonCodec<?> jsonCodec);
 
         @OldChain
         Builder setBinLogPropReader(ImmutableProp prop, BinLogPropReader reader);
@@ -543,13 +551,13 @@ public interface JSqlClient extends SubQueryProvider, DeprecatedMoreSaveOperatio
         Builder addExceptionTranslators(Collection<ExceptionTranslator<?>> translators);
 
         @OldChain
-        Builder addCustomizers(Customizer ... customizers);
+        Builder addCustomizers(Customizer... customizers);
 
         @OldChain
         Builder addCustomizers(Collection<? extends Customizer> customizers);
 
         @OldChain
-        Builder addInitializers(Initializer ... initializers);
+        Builder addInitializers(Initializer... initializers);
 
         @OldChain
         Builder addInitializers(Collection<? extends Initializer> initializers);

@@ -1,8 +1,6 @@
 package org.babyfish.jimmer.sql.cache.spi;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.babyfish.jimmer.jackson.ImmutableModule;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.cache.CacheTracker;
@@ -13,13 +11,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
+
 abstract class AbstractRemoteBinder<K, V> extends AbstractTrackingProducerBinder<K> implements LockableBinder<K, V> {
 
-    final ObjectMapper objectMapper;
+    final JsonCodec<?> jsonCodec;
 
     final RemoteKeyPrefixProvider keyPrefixProvider;
 
@@ -35,22 +38,13 @@ abstract class AbstractRemoteBinder<K, V> extends AbstractTrackingProducerBinder
             @Nullable ImmutableType type,
             @Nullable ImmutableProp prop,
             @Nullable CacheTracker tracker,
-            @Nullable ObjectMapper objectMapper,
+            @Nullable JsonCodec<?> jsonCodec,
             @Nullable RemoteKeyPrefixProvider keyPrefixProvider,
             Duration duration,
             int randomPercent
     ) {
         super(type, prop, tracker);
-        if (objectMapper != null) {
-            if (!objectMapper.getRegisteredModuleIds().contains(ImmutableModule.MODULE_ID)) {
-                throw new IllegalArgumentException("There is no ImmutableModule in object mapper");
-            }
-        } else {
-            objectMapper = new ObjectMapper()
-                    .registerModule(new ImmutableModule())
-                    .registerModule(new JavaTimeModule());
-        }
-        this.objectMapper = objectMapper;
+        this.jsonCodec = jsonCodec != null ? jsonCodec : jsonCodec();
         this.keyPrefixProvider = keyPrefixProvider != null ? keyPrefixProvider : RemoteKeyPrefixProvider.DEFAULT;
         if ((type == null) == (prop == null)) {
             throw new IllegalArgumentException("The nullity of type and prop cannot be same");
@@ -67,9 +61,9 @@ abstract class AbstractRemoteBinder<K, V> extends AbstractTrackingProducerBinder
         minMills = millis - randomPercent * millis / 100;
         maxMillis = millis + randomPercent * millis / 100;
         if (type != null) {
-            valueSerializer = new ValueSerializer<>(type, objectMapper);
+            valueSerializer = new ValueSerializer<>(type, this.jsonCodec);
         } else {
-            valueSerializer = new ValueSerializer<>(prop, objectMapper);
+            valueSerializer = new ValueSerializer<>(prop, this.jsonCodec);
         }
     }
 
@@ -113,7 +107,7 @@ abstract class AbstractRemoteBinder<K, V> extends AbstractTrackingProducerBinder
         protected final ImmutableType type;
         protected final ImmutableProp prop;
         protected CacheTracker tracker;
-        protected ObjectMapper objectMapper;
+        protected JsonCodec<?> jsonCodec;
         protected RemoteKeyPrefixProvider keyPrefixProvider;
         protected Duration duration = Duration.ofMinutes(30);
         protected int randomPercent = 30;
@@ -126,31 +120,31 @@ abstract class AbstractRemoteBinder<K, V> extends AbstractTrackingProducerBinder
         @SuppressWarnings("unchecked")
         public B publish(CacheTracker tracker) {
             this.tracker = tracker;
-            return (B)this;
+            return (B) this;
         }
 
         @SuppressWarnings("unchecked")
-        public B objectMapper(ObjectMapper objectMapper) {
-            this.objectMapper = objectMapper;
-            return (B)this;
+        public B jsonCodec(JsonCodec<?> jsonCodec) {
+            this.jsonCodec = jsonCodec;
+            return (B) this;
         }
 
         @SuppressWarnings("unchecked")
         public B keyPrefixProvider(RemoteKeyPrefixProvider keyPrefixProvider) {
             this.keyPrefixProvider = keyPrefixProvider;
-            return (B)this;
+            return (B) this;
         }
 
         @SuppressWarnings("unchecked")
         public B duration(Duration duration) {
             this.duration = duration;
-            return (B)this;
+            return (B) this;
         }
 
         @SuppressWarnings("unchecked")
         public B randomPercent(int randomPercent) {
             this.randomPercent = randomPercent;
-            return (B)this;
+            return (B) this;
         }
     }
 }

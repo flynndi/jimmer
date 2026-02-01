@@ -1,6 +1,6 @@
 package org.babyfish.jimmer.sql.kt.mutation
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule
 import org.babyfish.jimmer.kt.new
 import org.babyfish.jimmer.sql.ast.mutation.SaveMode
 import org.babyfish.jimmer.sql.kt.common.AbstractMutationTest
@@ -13,6 +13,9 @@ class EmbeddedMutationTest : AbstractMutationTest() {
 
     @Test
     fun testIssue527() {
+        val reader = jsonCodecWithoutImmutableModule()
+            .readerFor(DynamicRectInput::class.java)
+
         val sourceJson = "{" +
             "    \"leftTop\": {\"x\": 1}, " +
             "    \"rightBottom\": {\"y\": 2} " +
@@ -23,12 +26,8 @@ class EmbeddedMutationTest : AbstractMutationTest() {
             "}"
         val transform = new(Transform::class).by {
             id = 1L
-            source = jacksonObjectMapper()
-                .readValue(sourceJson, DynamicRectInput::class.java)
-                .toImmutable()
-            target = jacksonObjectMapper()
-                .readValue(targetJson, DynamicRectInput::class.java)
-                .toImmutable()
+            source = reader.read(sourceJson).toImmutable()
+            target = reader.read(targetJson).toImmutable()
         }
         connectAndExpect({
             sqlClient.entities.forConnection(it).save(transform) {

@@ -1,11 +1,12 @@
 package org.babyfish.jimmer.sql.json;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.sql.JSqlClient;
 import org.babyfish.jimmer.sql.common.NativeDatabases;
 import org.babyfish.jimmer.sql.dialect.PostgresDialect;
-import org.babyfish.jimmer.sql.model.pg.*;
+import org.babyfish.jimmer.sql.model.pg.JsonWrapperProps;
+import org.babyfish.jimmer.sql.model.pg.ScoresScalarProvider;
+import org.babyfish.jimmer.sql.model.pg.TagsScalarProvider;
 import org.babyfish.jimmer.sql.runtime.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
+
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 
 public abstract class AbstractJsonTest {
 
@@ -120,7 +123,7 @@ public abstract class AbstractJsonTest {
                 .setDialect(new PostgresDialect())
                 .setScalarProvider(JsonWrapperProps.TAGS, new TagsScalarProvider())
                 .setScalarProvider(JsonWrapperProps.SCORES, new ScoresScalarProvider())
-                .setDefaultSerializedTypeObjectMapper(new ObjectMapper())
+                .setDefaultSerializedTypeJsonCodec(jsonCodec())
                 .build();
 
         records.clear();
@@ -144,13 +147,13 @@ public abstract class AbstractJsonTest {
         return sqlClient;
     }
 
-    protected void sql(String sql, Object ... variables) {
+    protected void sql(String sql, Object... variables) {
         SQLRecord record = records.get(recordIndex++);
         Assertions.assertEquals(sql, record.sql);
         Assertions.assertEquals(Arrays.asList(variables), record.variableLists.get(0));
     }
 
-    protected void batchSql(String sql, List<Object> ... variableLists) {
+    protected void batchSql(String sql, List<Object>... variableLists) {
         SQLRecord record = records.get(recordIndex++);
         Assertions.assertEquals(sql, record.sql);
         Assertions.assertEquals(variableLists.length, record.variableLists.size());

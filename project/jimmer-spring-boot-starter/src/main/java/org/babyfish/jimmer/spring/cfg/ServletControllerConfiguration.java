@@ -1,6 +1,6 @@
 package org.babyfish.jimmer.spring.cfg;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.spring.client.JavaFeignController;
 import org.babyfish.jimmer.spring.client.OpenApiController;
 import org.babyfish.jimmer.spring.client.OpenApiUiController;
@@ -8,12 +8,15 @@ import org.babyfish.jimmer.spring.client.TypeScriptController;
 import org.babyfish.jimmer.spring.cloud.MicroServiceExporterController;
 import org.babyfish.jimmer.sql.JSqlClient;
 import org.babyfish.jimmer.sql.kt.KSqlClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 
+@AutoConfiguration
 @Conditional(HttpServletCondition.class)
 public class ServletControllerConfiguration {
 
@@ -51,11 +54,11 @@ public class ServletControllerConfiguration {
     public MicroServiceExporterController microServiceExporterController(
             @Autowired(required = false) JSqlClient jSqlClient,
             @Autowired(required = false) KSqlClient kSqlClient,
-            ObjectMapper objectMapper
+            ObjectProvider<JsonCodec<?>> jsonCodecProvider
     ) {
         return new MicroServiceExporterController(
                 jSqlClient != null ? jSqlClient : kSqlClient.getJavaClient(),
-                objectMapper
+                jsonCodecProvider.getIfAvailable(JsonCodec::jsonCodec)
         );
     }
 }

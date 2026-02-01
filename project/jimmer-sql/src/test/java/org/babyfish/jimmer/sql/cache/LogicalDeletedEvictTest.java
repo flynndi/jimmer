@@ -1,7 +1,5 @@
 package org.babyfish.jimmer.sql.cache;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.JSqlClient;
@@ -18,9 +16,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class LogicalDeletedEvictTest extends AbstractQueryTest {
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+public class LogicalDeletedEvictTest extends AbstractQueryTest {
 
     private JSqlClient sqlClient;
 
@@ -71,10 +69,10 @@ public class LogicalDeletedEvictTest extends AbstractQueryTest {
                     try {
                         sqlClient.getBinLog().accept(
                                 "administrator",
-                                MAPPER.readTree("{\"id\":1, \"deleted\":false}"),
-                                MAPPER.readTree("{\"id\":1, \"deleted\":true}")
+                                jsonCodec().treeReader().read("{\"id\":1, \"deleted\":false}"),
+                                jsonCodec().treeReader().read("{\"id\":1, \"deleted\":true}")
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;
@@ -109,10 +107,10 @@ public class LogicalDeletedEvictTest extends AbstractQueryTest {
                     try {
                         sqlClient.getBinLog().accept(
                                 "role",
-                                MAPPER.readTree("{\"id\":100, \"deleted\":false}"),
-                                MAPPER.readTree("{\"id\":100, \"deleted\":true}")
+                                jsonCodec().treeReader().read("{\"id\":100, \"deleted\":false}"),
+                                jsonCodec().treeReader().read("{\"id\":100, \"deleted\":true}")
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;
@@ -148,15 +146,16 @@ public class LogicalDeletedEvictTest extends AbstractQueryTest {
                     try {
                         sqlClient.getBinLog().accept(
                                 "permission",
-                                MAPPER.readTree("{\"id\":1000, \"deleted\":false, \"role_id\": 100}"),
-                                MAPPER.readTree("{\"id\":1000, \"deleted\":true}")
+                                jsonCodec().treeReader().read("{\"id\":1000, \"deleted\":false, \"role_id\": 100}"),
+                                jsonCodec().treeReader().read("{\"id\":1000, \"deleted\":true}")
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;
                 },
-                ctx -> {}
+                ctx -> {
+                }
         );
         Assertions.assertEquals(
                 Arrays.asList(
@@ -179,15 +178,16 @@ public class LogicalDeletedEvictTest extends AbstractQueryTest {
                     try {
                         sqlClient.getBinLog().accept(
                                 "permission",
-                                MAPPER.readTree("{\"id\":1000, \"deleted\":false, \"role_id\": 100}"),
-                                MAPPER.readTree("{\"id\":1000, \"deleted\":true, \"role_id\": 200}")
+                                jsonCodec().treeReader().read("{\"id\":1000, \"deleted\":false, \"role_id\": 100}"),
+                                jsonCodec().treeReader().read("{\"id\":1000, \"deleted\":true, \"role_id\": 200}")
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;
                 },
-                ctx -> {}
+                ctx -> {
+                }
         );
         Assertions.assertEquals(
                 Arrays.asList(
@@ -211,14 +211,15 @@ public class LogicalDeletedEvictTest extends AbstractQueryTest {
                         sqlClient.getBinLog().accept(
                                 "administrator_role_mapping",
                                 null,
-                                MAPPER.readTree("{\"administrator_id\":1, \"role_id\": 400}")
+                                jsonCodec().treeReader().read("{\"administrator_id\":1, \"role_id\": 400}")
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;
                 },
-                ctx -> {}
+                ctx -> {
+                }
         );
         Assertions.assertEquals(
                 Arrays.asList(
@@ -240,15 +241,16 @@ public class LogicalDeletedEvictTest extends AbstractQueryTest {
                     try {
                         sqlClient.getBinLog().accept(
                                 "administrator_role_mapping",
-                                MAPPER.readTree("{\"administrator_id\":1, \"role_id\": 200}"),
+                                jsonCodec().treeReader().read("{\"administrator_id\":1, \"role_id\": 200}"),
                                 null
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;
                 },
-                ctx -> {}
+                ctx -> {
+                }
         );
         Assertions.assertEquals(
                 Arrays.asList(

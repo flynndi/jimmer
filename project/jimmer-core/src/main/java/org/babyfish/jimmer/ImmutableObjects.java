@@ -1,10 +1,6 @@
 package org.babyfish.jimmer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.babyfish.jimmer.jackson.ImmutableModule;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.meta.*;
 import org.babyfish.jimmer.runtime.DraftSpi;
 import org.babyfish.jimmer.runtime.ImmutableSpi;
@@ -13,21 +9,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
+
 public class ImmutableObjects {
-
-    private static final ObjectMapper OBJECT_MAPPER;
-
-    private ImmutableObjects() {}
+    private ImmutableObjects() {
+    }
 
     /**
      * Jimmer object is dynamic, none properties are mandatory.
-     *
+     * <p>
      * This method can ask whether a property of the object is specified.
      *
      * @param immutable Object instance
-     * @param prop Property id
+     * @param prop      Property id
      * @return Whether the property of the object is specified.
-     * @exception IllegalArgumentException The first argument is immutable object created by jimmer
+     * @throws IllegalArgumentException The first argument is immutable object created by jimmer
      */
     public static boolean isLoaded(Object immutable, PropId prop) {
         if (immutable instanceof ImmutableSpi) {
@@ -38,13 +34,13 @@ public class ImmutableObjects {
 
     /**
      * Jimmer object is dynamic, none properties are mandatory.
-     *
+     * <p>
      * This method can ask whether a property of the object is specified.
      *
      * @param immutable Object instance
-     * @param prop Property name
+     * @param prop      Property name
      * @return Whether the property of the object is specified.
-     * @exception IllegalArgumentException The first argument is immutable object created by jimmer
+     * @throws IllegalArgumentException The first argument is immutable object created by jimmer
      */
     public static boolean isLoaded(Object immutable, String prop) {
         if (immutable instanceof ImmutableSpi) {
@@ -55,13 +51,13 @@ public class ImmutableObjects {
 
     /**
      * Jimmer object is dynamic, none properties are mandatory.
-     *
+     * <p>
      * This method can ask whether a property of the object is specified.
      *
      * @param immutable Object instance
-     * @param prop Property
+     * @param prop      Property
      * @return Whether the property of the object is specified.
-     * @exception IllegalArgumentException The first argument is immutable object created by jimmer
+     * @throws IllegalArgumentException The first argument is immutable object created by jimmer
      */
     public static boolean isLoaded(Object immutable, ImmutableProp prop) {
         return isLoaded(immutable, prop.getId());
@@ -69,20 +65,20 @@ public class ImmutableObjects {
 
     /**
      * Jimmer object is dynamic, none properties are mandatory.
-     *
+     * <p>
      * This method can ask whether a property of the object is specified.
      *
      * @param immutable Object instance
-     * @param prop Property
+     * @param prop      Property
      * @return Whether the property of the object is specified.
-     * @exception IllegalArgumentException The first argument is immutable object created by jimmer
+     * @throws IllegalArgumentException The first argument is immutable object created by jimmer
      */
     public static boolean isLoaded(Object immutable, TypedProp<?, ?> prop) {
         return isLoaded(immutable, prop.unwrap().getId());
     }
 
     @SuppressWarnings("unchecked")
-    public static boolean isLoadedChain(Object immutable, PropId ... propIds) {
+    public static boolean isLoadedChain(Object immutable, PropId... propIds) {
         ImmutableSpi spi = (ImmutableSpi) immutable;
         int parentCount = propIds.length - 1;
         if (parentCount == -1) {
@@ -126,14 +122,14 @@ public class ImmutableObjects {
      * if the property is not loaded, exception will be thrown.
      *
      * @param immutable Object instance
-     * @param prop Property id
+     * @param prop      Property id
      * @return Whether the property of the object is specified.
-     * @exception IllegalArgumentException There are two possibilities
-     *      <ul>
-     *          <li>The first argument is immutable object created by jimmer</li>
-     *          <li>The second argument is not a valid property name of immutable object</li>
-     *      </ul>
-     * @exception UnloadedException The property is not loaded
+     * @throws IllegalArgumentException There are two possibilities
+     *                                  <ul>
+     *                                      <li>The first argument is immutable object created by jimmer</li>
+     *                                      <li>The second argument is not a valid property name of immutable object</li>
+     *                                  </ul>
+     * @throws UnloadedException        The property is not loaded
      */
     public static Object get(Object immutable, PropId prop) {
         if (immutable instanceof ImmutableSpi) {
@@ -147,14 +143,14 @@ public class ImmutableObjects {
      * if the property is not loaded, exception will be thrown.
      *
      * @param immutable Object instance
-     * @param prop Property name
+     * @param prop      Property name
      * @return Whether the property of the object is specified.
-     * @exception IllegalArgumentException There are two possibilities
-     *      <ul>
-     *          <li>The first argument is immutable object created by jimmer</li>
-     *          <li>The second argument is not a valid property name of immutable object</li>
-     *      </ul>
-     * @exception UnloadedException The property is not loaded
+     * @throws IllegalArgumentException There are two possibilities
+     *                                  <ul>
+     *                                      <li>The first argument is immutable object created by jimmer</li>
+     *                                      <li>The second argument is not a valid property name of immutable object</li>
+     *                                  </ul>
+     * @throws UnloadedException        The property is not loaded
      */
     public static Object get(Object immutable, String prop) {
         if (immutable instanceof ImmutableSpi) {
@@ -168,14 +164,14 @@ public class ImmutableObjects {
      * if the property is not loaded, exception will be thrown.
      *
      * @param immutable Object instance
-     * @param prop Property
+     * @param prop      Property
      * @return Whether the property of the object is specified.
-     * @exception IllegalArgumentException There are two possibilities
-     *      <ul>
-     *          <li>The first argument is immutable object created by jimmer</li>
-     *          <li>The second argument is not a valid property name of immutable object</li>
-     *      </ul>
-     * @exception UnloadedException The property is not loaded
+     * @throws IllegalArgumentException There are two possibilities
+     *                                  <ul>
+     *                                      <li>The first argument is immutable object created by jimmer</li>
+     *                                      <li>The second argument is not a valid property name of immutable object</li>
+     *                                  </ul>
+     * @throws UnloadedException        The property is not loaded
      */
     public static Object get(Object immutable, ImmutableProp prop) {
         return get(immutable, prop.getId());
@@ -185,22 +181,21 @@ public class ImmutableObjects {
      * Get the property value of immutable object,
      * if the property is not loaded, exception will be thrown.
      *
-     * @param <T> The entity type
-     * @param <X> The property type
-     *
+     * @param <T>       The entity type
+     * @param <X>       The property type
      * @param immutable Object instance
-     * @param prop Property
+     * @param prop      Property
      * @return Whether the property of the object is specified.
-     * @exception IllegalArgumentException There are two possibilities
-     *      <ul>
-     *          <li>The first argument is immutable object created by jimmer</li>
-     *          <li>The second argument is not a valid property name of immutable object</li>
-     *      </ul>
-     * @exception UnloadedException The property is not loaded
+     * @throws IllegalArgumentException There are two possibilities
+     *                                  <ul>
+     *                                      <li>The first argument is immutable object created by jimmer</li>
+     *                                      <li>The second argument is not a valid property name of immutable object</li>
+     *                                  </ul>
+     * @throws UnloadedException        The property is not loaded
      */
     @SuppressWarnings("unchecked")
     public static <T, X> X get(T immutable, TypedProp<T, X> prop) {
-        return (X)get(immutable, prop.unwrap().getId());
+        return (X) get(immutable, prop.unwrap().getId());
     }
 
     public static boolean isIdOnly(Object immutable) {
@@ -278,7 +273,7 @@ public class ImmutableObjects {
         }
         ImmutableSpi spi = (ImmutableSpi) immutable;
         ImmutableType type = spi.__type();
-        return (T)Internal.produce(type, immutable, draft -> {
+        return (T) Internal.produce(type, immutable, draft -> {
             for (ImmutableProp prop : type.getProps().values()) {
                 PropId propId = prop.getId();
                 if (prop.isAssociation(TargetLevel.ENTITY) && spi.__isLoaded(propId)) {
@@ -307,7 +302,7 @@ public class ImmutableObjects {
             return toIdOnly((Set<T>) immutables);
         }
         List<T> idOnlyList = immutables instanceof Collection<?> ?
-                new ArrayList<>(((Collection<?>)immutables).size()) :
+                new ArrayList<>(((Collection<?>) immutables).size()) :
                 new ArrayList<>();
         for (T immutable : immutables) {
             idOnlyList.add(toIdOnly(immutable));
@@ -362,9 +357,9 @@ public class ImmutableObjects {
      */
     public static String toString(Object immutable) {
         try {
-            return OBJECT_MAPPER.writeValueAsString(immutable);
-        } catch (JsonProcessingException ex) {
-            throw new RuntimeException(ex);
+            return jsonCodec().writer().writeAsString(immutable);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Can't serialize object", e);
         }
     }
 
@@ -374,17 +369,25 @@ public class ImmutableObjects {
      * @param type Object type, can be interface type.
      * @return Deserialized object
      */
-    public static <I> I fromString(Class<I> type, String json) throws JsonProcessingException {
-        return OBJECT_MAPPER.readValue(json, type);
+    public static <I> I fromString(Class<I> type, String json) {
+        try {
+            return jsonCodec().readerFor(type).read(json);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Can't deserialize object ", e);
+        }
     }
 
-    public static <I> I fromString(Class<I> type, String json, @Nullable ObjectMapper mapper) throws JsonProcessingException {
-        return (mapper != null ? mapper : objectMapper()).readValue(json, type);
+    public static <I> I fromString(Class<I> type, String json, @Nullable JsonCodec<?> jsonCodec) {
+        try {
+            return (jsonCodec != null ? jsonCodec : jsonCodec()).readerFor(type).read(json);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Can't deserialize object ", e);
+        }
     }
 
     @SuppressWarnings("unchecked")
     @SafeVarargs
-    public static <I> I merge(I ... parts) {
+    public static <I> I merge(I... parts) {
         List<ImmutableSpi> spis = new ArrayList<>(parts.length);
         for (I part : parts) {
             if (part == null) {
@@ -535,40 +538,12 @@ public class ImmutableObjects {
                         continue;
                     }
                     if (value instanceof Collection<?>) {
-                        draftSpi.__set(propId, emptyStringToNull((Collection<?>)value));
+                        draftSpi.__set(propId, emptyStringToNull((Collection<?>) value));
                     } else {
                         draftSpi.__set(propId, emptyStringToNullImpl(value));
                     }
                 }
             }
         });
-    }
-
-    private static ObjectMapper objectMapper() {
-        if (OBJECT_MAPPER == null) {
-            throw new IllegalStateException("Jackson2 is required");
-        }
-        return OBJECT_MAPPER;
-    }
-
-    private static boolean classExists(String className) {
-        try {
-            Class.forName(className);
-            return true;
-        } catch (ClassNotFoundException ex) {
-            return false;
-        }
-    }
-
-    static {
-        if (classExists("com.fasterxml.jackson.databind.ObjectMapper")) {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            mapper.registerModule(new ImmutableModule());
-            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-            OBJECT_MAPPER = mapper;
-        } else {
-            OBJECT_MAPPER = null;
-        }
     }
 }

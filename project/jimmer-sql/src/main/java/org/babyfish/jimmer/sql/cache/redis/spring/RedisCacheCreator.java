@@ -1,8 +1,6 @@
 package org.babyfish.jimmer.sql.cache.redis.spring;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.babyfish.jimmer.jackson.ImmutableModule;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.cache.Cache;
@@ -21,6 +19,7 @@ import java.util.Objects;
  * framework-related classes should not be included in the jimmer-sql module.<br>
  * <br>
  * Redis-related caching should be implemented through framework-specific extensions.
+ *
  * @see "org.babyfish.jimmer.spring.cache.RedisCacheCreator(Provided by jimmer-spring-boot-starter)"
  */
 @Deprecated
@@ -34,9 +33,9 @@ public class RedisCacheCreator extends AbstractCacheCreator {
 
     public RedisCacheCreator(
             RedisConnectionFactory connectionFactory,
-            ObjectMapper objectMapper
+            JsonCodec<?> jsonCodec
     ) {
-        super(new Root(connectionFactory, objectMapper));
+        super(new Root(connectionFactory, jsonCodec));
     }
 
     protected RedisCacheCreator(Cfg cfg) {
@@ -119,7 +118,7 @@ public class RedisCacheCreator extends AbstractCacheCreator {
         return RedisValueBinder
                 .<K, V>forObject(type)
                 .publish(args.tracker)
-                .objectMapper(args.objectMapper)
+                .jsonCodec(args.jsonCodec)
                 .keyPrefixProvider(args.keyPrefixProvider)
                 .duration(args.duration)
                 .randomPercent(args.randomDurationPercent)
@@ -137,7 +136,7 @@ public class RedisCacheCreator extends AbstractCacheCreator {
         return RedisValueBinder
                 .<K, V>forProp(prop)
                 .publish(args.tracker)
-                .objectMapper(args.objectMapper)
+                .jsonCodec(args.jsonCodec)
                 .duration(args.duration)
                 .keyPrefixProvider(args.keyPrefixProvider)
                 .randomPercent(args.randomDurationPercent)
@@ -155,7 +154,7 @@ public class RedisCacheCreator extends AbstractCacheCreator {
         return RedisHashBinder
                 .<K, V>forProp(prop)
                 .publish(args.tracker)
-                .objectMapper(args.objectMapper)
+                .jsonCodec(args.jsonCodec)
                 .keyPrefixProvider(args.keyPrefixProvider)
                 .duration(args.multiVewDuration)
                 .randomPercent(args.randomDurationPercent)
@@ -172,19 +171,19 @@ public class RedisCacheCreator extends AbstractCacheCreator {
 
         final RedisConnectionFactory connectionFactory;
 
-        final ObjectMapper objectMapper;
+        final JsonCodec<?> jsonCodec;
 
-        private Root(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        private Root(RedisConnectionFactory connectionFactory, JsonCodec<?> jsonCodec) {
             super(null);
             this.connectionFactory = Objects.requireNonNull(connectionFactory, "connectionFactory cannot be null");
-            this.objectMapper = objectMapper;
+            this.jsonCodec = jsonCodec;
         }
     }
 
     static class Args extends AbstractCacheCreator.Args {
 
         final RedisConnectionFactory connectionFactory;
-        final ObjectMapper objectMapper;
+        final JsonCodec<?> jsonCodec;
 
         Args(Cfg cfg) {
             super(cfg);
@@ -192,13 +191,7 @@ public class RedisCacheCreator extends AbstractCacheCreator {
             Root root = cfg.as(Root.class);
 
             this.connectionFactory = root.connectionFactory;
-            ObjectMapper mapper = root.objectMapper;
-            ObjectMapper clonedMapper = mapper != null ?
-                    new ObjectMapper(mapper) {} :
-                    new ObjectMapper();
-            clonedMapper.registerModule(new JavaTimeModule());
-            clonedMapper.registerModule(new ImmutableModule());
-            this.objectMapper = clonedMapper;
+            this.jsonCodec = root.jsonCodec;
         }
     }
 }

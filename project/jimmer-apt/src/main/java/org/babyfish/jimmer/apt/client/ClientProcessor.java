@@ -113,7 +113,7 @@ public class ClientProcessor {
         if (jimmerClientFile.exists()) {
             try (Reader reader = new InputStreamReader(Files.newInputStream(jimmerClientFile.toPath()), StandardCharsets.UTF_8)) {
                 return Schemas.readServicesFrom(reader);
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 throw new GeneratorException("Cannot read content of  \"" + jimmerClientFile + "\"", ex);
             }
         }
@@ -138,7 +138,7 @@ public class ClientProcessor {
         jimmerClientFile.getParentFile().mkdirs();
         try (Writer writer = new OutputStreamWriter(Files.newOutputStream(jimmerClientFile.toPath()), StandardCharsets.UTF_8)) {
             Schemas.writeTo(schema, writer);
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             throw new GeneratorException("Cannot write \"" + jimmerClientFile + "\"", ex);
         }
     }
@@ -313,7 +313,7 @@ public class ClientProcessor {
         for (ClientExceptionMetadata subMetadata : metadata.getSubMetdatas()) {
             collectExceptionTypeNames(subMetadata, exceptionTypeNames);
         }
-     }
+    }
 
     private void fillType(TypeMirror type) {
         if (type.getKind() != TypeKind.VOID) {
@@ -333,7 +333,7 @@ public class ClientProcessor {
 
         TypeRefImpl<Element> typeRef = builder.current();
 
-        AnnotationMirror fetchBy = entityType.getAnnotationMirrors().stream().filter( it ->
+        AnnotationMirror fetchBy = entityType.getAnnotationMirrors().stream().filter(it ->
                 FETCH_BY_NAME.equals(typeName(it.getAnnotationType().asElement()))
         ).findFirst().orElse(null);
         if (fetchBy == null) {
@@ -414,7 +414,7 @@ public class ClientProcessor {
                 genericTypeName = declaredType.getTypeArguments().get(0).toString();
             }
         }
-        if (!((TypeElement)((DeclaredType)entityType).asElement()).getQualifiedName().toString().equals(genericTypeName)) {
+        if (!((TypeElement) ((DeclaredType) entityType).asElement()).getQualifiedName().toString().equals(genericTypeName)) {
             throw new MetaException(
                     builder.ancestorSource(ApiOperationImpl.class, ApiParameterImpl.class),
                     builder.ancestorSource(),
@@ -422,7 +422,7 @@ public class ClientProcessor {
                             constant +
                             "\" in owner type \"\"" +
                             owner + " but it is not fetcher for \"" +
-                            ((TypeElement)((DeclaredType)entityType).asElement()).getQualifiedName() +
+                            ((TypeElement) ((DeclaredType) entityType).asElement()).getQualifiedName() +
                             "\""
             );
         }
@@ -606,9 +606,6 @@ public class ClientProcessor {
             typeRef.setTypeName(TypeName.OBJECT);
             return;
         }
-
-
-
 
         if (!typeElement.getTypeParameters().isEmpty() && declaredType.getTypeArguments().isEmpty()) {
             throw new NoGenericArgumentsException(
@@ -866,7 +863,7 @@ public class ClientProcessor {
             return false;
         }
         return ApiOperation.AUTO_OPERATION_ANNOTATIONS.stream().anyMatch(it ->
-            Annotations.annotationMirror(element, it) != null
+                Annotations.annotationMirror(element, it) != null
         );
     }
 

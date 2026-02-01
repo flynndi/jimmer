@@ -1,11 +1,5 @@
 package org.babyfish.jimmer.sql.time;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.babyfish.jimmer.jackson.ImmutableModule;
-import org.babyfish.jimmer.sql.ast.Expression;
 import org.babyfish.jimmer.sql.ast.Predicate;
 import org.babyfish.jimmer.sql.ast.SqlTimeUnit;
 import org.babyfish.jimmer.sql.ast.table.WeakJoin;
@@ -21,17 +15,14 @@ import org.junit.jupiter.api.Test;
 
 import javax.sql.DataSource;
 
-public class SqlTimeFunctionTest extends AbstractQueryTest {
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-            .registerModule(new ImmutableModule())
-            .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+public class SqlTimeFunctionTest extends AbstractQueryTest {
 
     private static String toString(Object o) {
         try {
-            return MAPPER.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
+            return jsonCodec().writer().writeAsString(o);
+        } catch (Exception e) {
             Assertions.fail();
             return "";
         }

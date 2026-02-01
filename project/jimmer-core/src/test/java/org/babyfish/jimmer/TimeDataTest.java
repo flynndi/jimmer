@@ -1,6 +1,5 @@
 package org.babyfish.jimmer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.babyfish.jimmer.model.TimeData;
 import org.babyfish.jimmer.model.TimeDataDraft;
 import org.junit.jupiter.api.Assertions;
@@ -13,7 +12,7 @@ import java.util.Date;
 public class TimeDataTest {
 
     @Test
-    public void test() throws JsonProcessingException {
+    public void test() {
         LocalDateTime time = LocalDateTime.of(2022, 9, 13, 23, 49, 34);
         TimeData timeData = TimeDataDraft.$.produce(data -> {
             data.setTime1(Date.from(time.atOffset(ZoneOffset.ofHours(8)).toInstant()));

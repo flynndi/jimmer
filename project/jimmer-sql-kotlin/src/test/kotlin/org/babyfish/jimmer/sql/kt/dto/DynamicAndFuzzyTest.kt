@@ -1,8 +1,6 @@
 package org.babyfish.jimmer.sql.kt.dto
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule
 import org.babyfish.jimmer.sql.kt.common.assertContent
 import org.babyfish.jimmer.sql.kt.model.classic.book.dto.DynamicBookInput
 import org.babyfish.jimmer.sql.kt.model.classic.book.dto.DynamicBookInput2
@@ -21,10 +19,10 @@ class DynamicAndFuzzyTest {
             "{\"name\":\"MANNING\"}",
             input.toEntity()
         )
-        val store = jacksonObjectMapper().readValue(
-            "{\"name\":\"MANNING\"}",
-            DynamicBookStoreInput::class.java
-        ).toEntity()
+        val store = jsonCodecWithoutImmutableModule()
+            .readerFor(DynamicBookStoreInput::class.java)
+            .read("{\"name\":\"MANNING\"}")
+            .toEntity()
         assertContent(
             "{\"name\":\"MANNING\"}",
             store
@@ -38,10 +36,10 @@ class DynamicAndFuzzyTest {
             "{}",
             input.toEntity()
         )
-        val book = jacksonObjectMapper().readValue(
-            "{}",
-            DynamicBookInput::class.java
-        ).toEntity()
+        val book = jsonCodecWithoutImmutableModule()
+            .readerFor(DynamicBookInput::class.java)
+            .read("{}")
+            .toEntity()
         assertContent("{}", book)
     }
 
@@ -56,34 +54,34 @@ class DynamicAndFuzzyTest {
             )
         assertContent(
             "{" +
-                "--->\"name\":\"Book\"," +
-                "--->\"edition\":7," +
-                "--->\"price\":59.99," +
-                "--->\"store\":{" +
-                "--->--->\"id\":3" +
-                "--->}" +
-                "}",
+                    "--->\"name\":\"Book\"," +
+                    "--->\"edition\":7," +
+                    "--->\"price\":59.99," +
+                    "--->\"store\":{" +
+                    "--->--->\"id\":3" +
+                    "--->}" +
+                    "}",
             input.toEntity().toString()
         )
-        val book = jacksonObjectMapper()
-            .readValue(
+        val book = jsonCodecWithoutImmutableModule()
+            .readerFor(DynamicBookInput::class.java)
+            .read(
                 "{" +
-                    "\"name\":\"Book\"," +
-                    "\"edition\":7," +
-                    "\"price\":59.99," +
-                    "\"storeId\":3" +
-                    "}",
-                DynamicBookInput::class.java
+                        "\"name\":\"Book\"," +
+                        "\"edition\":7," +
+                        "\"price\":59.99," +
+                        "\"storeId\":3" +
+                        "}"
             ).toEntity()
         assertContent(
             "{" +
-                "--->\"name\":\"Book\"," +
-                "--->\"edition\":7," +
-                "--->\"price\":59.99," +
-                "--->\"store\":{" +
-                "--->--->\"id\":3" +
-                "--->}" +
-                "}",
+                    "--->\"name\":\"Book\"," +
+                    "--->\"edition\":7," +
+                    "--->\"price\":59.99," +
+                    "--->\"store\":{" +
+                    "--->--->\"id\":3" +
+                    "--->}" +
+                    "}",
             book
         )
     }
@@ -99,8 +97,9 @@ class DynamicAndFuzzyTest {
             "{\"store\":{\"name\":\"MANNING\",\"website\":null}}",
             input.toEntity()
         )
-        val book = jacksonObjectMapper()
-            .readValue<DynamicBookInput2>("{\"parentName\":\"MANNING\",\"parentWebsite\":null}")
+        val book = jsonCodecWithoutImmutableModule()
+            .readerFor(DynamicBookInput2::class.java)
+            .read("{\"parentName\":\"MANNING\",\"parentWebsite\":null}")
             .toEntity()
         assertContent(
             "{\"store\":{\"name\":\"MANNING\",\"website\":null}}",
@@ -119,36 +118,37 @@ class DynamicAndFuzzyTest {
         )
         assertContent(
             "{" +
-                "--->\"name\":\"Book\"," +
-                "--->\"edition\":7," +
-                "--->\"price\":59.99," +
-                "--->\"store\":{" +
-                "--->--->\"name\":\"Store\"," +
-                "--->--->\"website\":\"https://www.store.com\"" +
-                "--->}" +
-                "}",
+                    "--->\"name\":\"Book\"," +
+                    "--->\"edition\":7," +
+                    "--->\"price\":59.99," +
+                    "--->\"store\":{" +
+                    "--->--->\"name\":\"Store\"," +
+                    "--->--->\"website\":\"https://www.store.com\"" +
+                    "--->}" +
+                    "}",
             input.toEntity().toString()
         )
-        val book = jacksonObjectMapper()
-            .readValue<DynamicBookInput2>(
+        val book = jsonCodecWithoutImmutableModule()
+            .readerFor(DynamicBookInput2::class.java)
+            .read(
                 "{" +
-                    "\"name\":\"Book\"," +
-                    "\"edition\":7," +
-                    "\"price\":59.99," +
-                    "\"parentName\":\"Store\"," +
-                    "\"parentWebsite\":\"https://www.store.com\"" +
-                    "}"
+                        "\"name\":\"Book\"," +
+                        "\"edition\":7," +
+                        "\"price\":59.99," +
+                        "\"parentName\":\"Store\"," +
+                        "\"parentWebsite\":\"https://www.store.com\"" +
+                        "}"
             ).toEntity()
         assertContent(
             "{" +
-                "--->\"name\":\"Book\"," +
-                "--->\"edition\":7," +
-                "--->\"price\":59.99," +
-                "--->\"store\":{" +
-                "--->--->\"name\":\"Store\"," +
-                "--->--->\"website\":\"https://www.store.com\"" +
-                "--->}" +
-                "}",
+                    "--->\"name\":\"Book\"," +
+                    "--->\"edition\":7," +
+                    "--->\"price\":59.99," +
+                    "--->\"store\":{" +
+                    "--->--->\"name\":\"Store\"," +
+                    "--->--->\"website\":\"https://www.store.com\"" +
+                    "--->}" +
+                    "}",
             book
         )
     }
@@ -158,10 +158,11 @@ class DynamicAndFuzzyTest {
         val input = DynamicBookInput(name = "MANNING")
         assertContent(
             "{\"name\":\"MANNING\"}",
-            ObjectMapper().writeValueAsString(input)
+            jsonCodecWithoutImmutableModule().writer().writeAsString(input)
         )
-        val book = jacksonObjectMapper()
-            .readValue<DynamicBookInput>("{\"name\":\"MANNING\"}")
+        val book = jsonCodecWithoutImmutableModule()
+            .readerFor(DynamicBookInput::class.java)
+            .read("{\"name\":\"MANNING\"}")
             .toEntity()
         assertContent(
             "{\"name\":\"MANNING\"}",
@@ -174,19 +175,20 @@ class DynamicAndFuzzyTest {
         val input = FuzzyBookInput(name = "SQL in Action")
         assertContent(
             "{\"name\":\"SQL in Action\"," +
-                "\"edition\":null," +
-                "\"price\":null," +
-                "\"storeId\":null," +
-                "\"authorIds\":null}",
-            jacksonObjectMapper().writeValueAsString(input)
-        )
-        val book = jacksonObjectMapper()
-            .readValue<FuzzyBookInput>(
-                "{\"name\":\"SQL in Action\"," +
                     "\"edition\":null," +
                     "\"price\":null," +
                     "\"storeId\":null," +
                     "\"authorIds\":null}",
+            jsonCodecWithoutImmutableModule().writer().writeAsString(input)
+        )
+        val book = jsonCodecWithoutImmutableModule()
+            .readerFor(FuzzyBookInput::class.java)
+            .read(
+                "{\"name\":\"SQL in Action\"," +
+                        "\"edition\":null," +
+                        "\"price\":null," +
+                        "\"storeId\":null," +
+                        "\"authorIds\":null}",
             ).toEntity()
         assertContent("{\"name\":\"SQL in Action\"}", book)
     }

@@ -1,7 +1,6 @@
 package org.babyfish.jimmer.sql.kt.dto
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule
 import org.babyfish.jimmer.sql.kt.model.hr.dto.DepartmentView2
 import org.babyfish.jimmer.sql.kt.model.hr.dto.EmployeeInput
 import kotlin.test.Test
@@ -22,13 +21,8 @@ class JacksonTest {
     }
 
     private fun testOutputImpl(registerKtMode: Boolean) {
-        val mapper = ObjectMapper().apply {
-            if (registerKtMode) {
-                registerModule(KotlinModule.Builder().build())
-            }
-        }
         val department = DepartmentView2(id = "00A", name = "Develop")
-        val json = mapper.writeValueAsString(department)
+        val json = jsonCodecWithoutImmutableModule().writer().writeAsString(department)
         expect(
             "{\"id\":\"00A\",\"name\":\"Efwfmpq\"}"
         ) {
@@ -37,18 +31,13 @@ class JacksonTest {
         expect(
             "DepartmentView2(id=00A, name=Develop)"
         ) {
-            mapper.readValue(json, DepartmentView2::class.java).toString()
+            jsonCodecWithoutImmutableModule().readerFor(DepartmentView2::class.java).read(json).toString()
         }
     }
 
     private fun testInputForIssue807Impl(registerKtMode: Boolean) {
-        val mapper = ObjectMapper().apply {
-            if (registerKtMode) {
-                registerModule(KotlinModule.Builder().build())
-            }
-        }
         val employee = EmployeeInput("001", "Rossi")
-        val json = mapper.writeValueAsString(employee)
+        val json = jsonCodecWithoutImmutableModule().writer().writeAsString(employee)
         expect(
             "{\"id\":\"001\",\"name\":\"Spttj\"}"
         ) {
@@ -57,7 +46,7 @@ class JacksonTest {
         expect(
             "EmployeeInput(id=001, name=Rossi)"
         ) {
-            mapper.readValue(json, EmployeeInput::class.java).toString()
+            jsonCodecWithoutImmutableModule().readerFor(EmployeeInput::class.java).read(json).toString()
         }
     }
 }

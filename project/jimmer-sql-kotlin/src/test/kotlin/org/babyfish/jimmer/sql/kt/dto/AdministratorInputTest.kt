@@ -1,7 +1,6 @@
 package org.babyfish.jimmer.sql.kt.dto
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule
 import org.babyfish.jimmer.sql.kt.common.assertContent
 import org.babyfish.jimmer.sql.kt.model.inheritance.dto.AdministratorInputForIssue684
 import org.babyfish.jimmer.sql.kt.model.inheritance.dto.AdministratorInputForIssue819
@@ -35,14 +34,13 @@ class AdministratorInputTest {
     @Test
     fun testIssueFor819() {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        val mapper = ObjectMapper().registerModule(JavaTimeModule())
         val input = AdministratorInputForIssue819(
             id = 10L,
             name = "SuperAdmin",
             createdTime = LocalDateTime.parse("2024-12-02 13:07:24", formatter),
             modifiedTime = LocalDateTime.parse("2024-12-03 02:00:14", formatter),
         )
-        val json = mapper.writeValueAsString(input)
+        val json = jsonCodecWithoutImmutableModule().writer().writeAsString(input)
         assertContent(
             """{"
                 |--->id":10,
@@ -52,7 +50,10 @@ class AdministratorInputTest {
                 |}""".trimMargin(),
             json
         )
-        val input2 = mapper.readValue(json, AdministratorInputForIssue819::class.java)
+        val input2 = jsonCodecWithoutImmutableModule()
+            .readerFor(AdministratorInputForIssue819::class.java)
+            .read(json)
+
         assertContent(
             """AdministratorInputForIssue819(
                 |--->id=10, 

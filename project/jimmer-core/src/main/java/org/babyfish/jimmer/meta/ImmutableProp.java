@@ -2,7 +2,6 @@ package org.babyfish.jimmer.meta;
 
 import org.babyfish.jimmer.jackson.Converter;
 import org.babyfish.jimmer.jackson.ConverterMetadata;
-import org.babyfish.jimmer.jackson.v3.ConverterMetadata3;
 import org.babyfish.jimmer.lang.Ref;
 import org.babyfish.jimmer.runtime.ImmutableSpi;
 import org.babyfish.jimmer.sql.DissociateAction;
@@ -91,8 +90,6 @@ public interface ImmutableProp {
 
     ConverterMetadata getConverterMetadata();
 
-    ConverterMetadata3 getConverterMetadata3();
-
     <S, T> Converter<S, T> getConverter();
 
     <S, T> Converter<S, T> getConverter(boolean forList);
@@ -140,7 +137,7 @@ public interface ImmutableProp {
                     NullOrderMode nullsOrder = orderedItem.getNullsOrder();
                     if (nullsOrder == NullOrderMode.NULLS_FIRST) {
                         comparator = Comparator.nullsFirst(comparator);
-                    } else if (nullsOrder ==  NullOrderMode.NULLS_LAST) {
+                    } else if (nullsOrder == NullOrderMode.NULLS_LAST) {
                         comparator = Comparator.nullsLast(comparator);
                     }
                     PropId orderPropId = orderedItem.getProp().getId();

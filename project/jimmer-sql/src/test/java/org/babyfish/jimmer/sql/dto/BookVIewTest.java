@@ -1,7 +1,5 @@
 package org.babyfish.jimmer.sql.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.babyfish.jimmer.sql.common.Constants;
 import org.babyfish.jimmer.sql.common.Tests;
 import org.babyfish.jimmer.sql.model.dto.BookViewForIssue843;
@@ -9,10 +7,12 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule;
+
 public class BookVIewTest extends Tests {
 
     @Test
-    public void testForIssue843() throws JsonProcessingException {
+    public void testForIssue843() throws Exception {
         BookViewForIssue843 view = new BookViewForIssue843();
         view.setId(Constants.programmingTypeScriptId2);
         view.setName("Programming TypeScript");
@@ -24,7 +24,7 @@ public class BookVIewTest extends Tests {
                         "--->\"name\":\"Programming TypeScript\"," +
                         "--->\"price\":59.99" +
                         "}",
-                new ObjectMapper().writeValueAsString(view)
+                jsonCodecWithoutImmutableModule().writer().writeAsString(view)
         );
     }
 }

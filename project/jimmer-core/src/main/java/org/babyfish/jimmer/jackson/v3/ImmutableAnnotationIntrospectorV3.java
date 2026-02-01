@@ -1,6 +1,13 @@
 package org.babyfish.jimmer.jackson.v3;
 
+import org.babyfish.jimmer.Draft;
+import org.babyfish.jimmer.JimmerVersion;
+import org.babyfish.jimmer.impl.util.StringUtil;
+import org.babyfish.jimmer.jackson.Converter;
+import org.babyfish.jimmer.jackson.ConverterMetadata;
 import org.babyfish.jimmer.jackson.ImmutableProps;
+import org.babyfish.jimmer.meta.ImmutableProp;
+import org.babyfish.jimmer.meta.ImmutableType;
 import tools.jackson.core.Version;
 import tools.jackson.databind.AnnotationIntrospector;
 import tools.jackson.databind.DeserializationContext;
@@ -11,16 +18,11 @@ import tools.jackson.databind.cfg.MapperConfig;
 import tools.jackson.databind.introspect.Annotated;
 import tools.jackson.databind.introspect.AnnotatedClass;
 import tools.jackson.databind.type.TypeFactory;
-import org.babyfish.jimmer.Draft;
-import org.babyfish.jimmer.JimmerVersion;
-import org.babyfish.jimmer.impl.util.StringUtil;
-import org.babyfish.jimmer.meta.ImmutableProp;
-import org.babyfish.jimmer.meta.ImmutableType;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 
-class ImmutableAnnotationIntrospector3 extends AnnotationIntrospector {
+class ImmutableAnnotationIntrospectorV3 extends AnnotationIntrospector {
 
     @Override
     public Version version() {
@@ -84,7 +86,7 @@ class ImmutableAnnotationIntrospector3 extends AnnotationIntrospector {
             ImmutableType type = ImmutableType.tryGet(method.getDeclaringClass());
             if (type != null) {
                 ImmutableProp prop = ImmutableProps.get(type, method);
-                ConverterMetadata3 metadata = prop.getConverterMetadata3();
+                ConverterMetadata metadata = prop.getConverterMetadata();
                 if (metadata != null) {
                     return toOutput(metadata);
                 }
@@ -107,7 +109,7 @@ class ImmutableAnnotationIntrospector3 extends AnnotationIntrospector {
                         propName = method.getName();
                     }
                     ImmutableProp prop = type.getProp(propName);
-                    ConverterMetadata3 metadata = prop.getConverterMetadata3();
+                    ConverterMetadata metadata = prop.getConverterMetadata();
                     if (metadata != null) {
                         return toInput(metadata);
                     }
@@ -117,12 +119,16 @@ class ImmutableAnnotationIntrospector3 extends AnnotationIntrospector {
         return super.findDeserializationConverter(config, a);
     }
 
-    private static tools.jackson.databind.util.Converter<?, ?> toOutput(ConverterMetadata3 metadata) {
+    private static tools.jackson.databind.util.Converter<?, ?> toOutput(ConverterMetadata metadata) {
+        JavaType sourceJacksonType = JacksonUtilsV3.getJacksonType(metadata.getSourceType());
+        JavaType targetJacksonType = JacksonUtilsV3.getJacksonType(metadata.getTargetType());
+        Converter<Object, Object> converter = metadata.getConverter();
+
         return new tools.jackson.databind.util.Converter<Object, Object>() {
 
             @Override
             public Object convert(final SerializationContext ctxt, final Object value) {
-                return metadata.getConverter().output(value);
+                return converter.output(value);
             }
 
             @Override
@@ -132,17 +138,21 @@ class ImmutableAnnotationIntrospector3 extends AnnotationIntrospector {
 
             @Override
             public JavaType getInputType(TypeFactory typeFactory) {
-                return metadata.getSourceJacksonType();
+                return sourceJacksonType;
             }
 
             @Override
             public JavaType getOutputType(TypeFactory typeFactory) {
-                return metadata.getTargetJacksonType();
+                return targetJacksonType;
             }
         };
     }
 
-    private static tools.jackson.databind.util.Converter<?, ?> toInput(ConverterMetadata3 metadata) {
+    private static tools.jackson.databind.util.Converter<?, ?> toInput(ConverterMetadata metadata) {
+        JavaType sourceJacksonType = JacksonUtilsV3.getJacksonType(metadata.getSourceType());
+        JavaType targetJacksonType = JacksonUtilsV3.getJacksonType(metadata.getTargetType());
+        Converter<Object, Object> converter = metadata.getConverter();
+
         return new tools.jackson.databind.util.Converter<Object, Object>() {
 
             @Override
@@ -152,17 +162,17 @@ class ImmutableAnnotationIntrospector3 extends AnnotationIntrospector {
 
             @Override
             public Object convert(final DeserializationContext ctxt, final Object value) {
-                return metadata.getConverter().input(value);
+                return converter.input(value);
             }
 
             @Override
             public JavaType getInputType(TypeFactory typeFactory) {
-                return metadata.getTargetJacksonType();
+                return targetJacksonType;
             }
 
             @Override
             public JavaType getOutputType(TypeFactory typeFactory) {
-                return metadata.getSourceJacksonType();
+                return sourceJacksonType;
             }
         };
     }

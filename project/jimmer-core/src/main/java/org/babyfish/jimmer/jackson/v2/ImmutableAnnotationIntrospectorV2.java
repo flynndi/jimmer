@@ -1,4 +1,4 @@
-package org.babyfish.jimmer.jackson;
+package org.babyfish.jimmer.jackson.v2;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
@@ -10,15 +10,16 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.babyfish.jimmer.Draft;
 import org.babyfish.jimmer.JimmerVersion;
 import org.babyfish.jimmer.impl.util.StringUtil;
+import org.babyfish.jimmer.jackson.Converter;
+import org.babyfish.jimmer.jackson.ConverterMetadata;
+import org.babyfish.jimmer.jackson.ImmutableProps;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 
-import javax.lang.model.element.Element;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
-import java.util.function.Function;
 
-class ImmutableAnnotationIntrospector extends AnnotationIntrospector {
+class ImmutableAnnotationIntrospectorV2 extends AnnotationIntrospector {
 
     @Override
     public Version version() {
@@ -109,39 +110,48 @@ class ImmutableAnnotationIntrospector extends AnnotationIntrospector {
     }
 
     private static com.fasterxml.jackson.databind.util.Converter<?, ?> toOutput(ConverterMetadata metadata) {
+        JavaType sourceJacksonType = JacksonUtilsV2.getJacksonType(metadata.getSourceType());
+        JavaType targetJacksonType = JacksonUtilsV2.getJacksonType(metadata.getTargetType());
+        Converter<Object, Object> converter = metadata.getConverter();
+
         return new com.fasterxml.jackson.databind.util.Converter<Object, Object>() {
+
             @Override
             public Object convert(Object value) {
-                return metadata.getConverter().output(value);
+                return converter.output(value);
             }
 
             @Override
             public JavaType getInputType(TypeFactory typeFactory) {
-                return metadata.getSourceJacksonType();
+                return sourceJacksonType;
             }
 
             @Override
             public JavaType getOutputType(TypeFactory typeFactory) {
-                return metadata.getTargetJacksonType();
+                return targetJacksonType;
             }
         };
     }
 
     private static com.fasterxml.jackson.databind.util.Converter<?, ?> toInput(ConverterMetadata metadata) {
+        JavaType sourceJacksonType = JacksonUtilsV2.getJacksonType(metadata.getSourceType());
+        JavaType targetJacksonType = JacksonUtilsV2.getJacksonType(metadata.getTargetType());
+        Converter<Object, Object> converter = metadata.getConverter();
+
         return new com.fasterxml.jackson.databind.util.Converter<Object, Object>() {
             @Override
             public Object convert(Object value) {
-                return metadata.getConverter().input(value);
+                return converter.input(value);
             }
 
             @Override
             public JavaType getInputType(TypeFactory typeFactory) {
-                return metadata.getTargetJacksonType();
+                return targetJacksonType;
             }
 
             @Override
             public JavaType getOutputType(TypeFactory typeFactory) {
-                return metadata.getSourceJacksonType();
+                return sourceJacksonType;
             }
         };
     }

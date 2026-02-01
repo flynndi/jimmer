@@ -1,6 +1,7 @@
 package org.babyfish.jimmer.sql.event.binlog.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.babyfish.jimmer.jackson.codec.Node;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.association.meta.AssociationType;
 import org.babyfish.jimmer.sql.cache.TransactionCacheOperator;
@@ -48,11 +49,13 @@ public class BinLogImpl implements BinLog {
         this.triggers = triggers;
     }
 
-    public void accept(String tableName, JsonNode oldData, JsonNode newData) {
+    @Override
+    public void accept(String tableName, Node oldData, Node newData) {
         accept(tableName, oldData, newData, null);
     }
 
-    public void accept(String tableName, JsonNode oldData, JsonNode newData, String reason) {
+    @Override
+    public void accept(String tableName, Node oldData, Node newData, String reason) {
         boolean isOldNull = oldData == null || oldData.isNull();
         boolean isNewNull = newData == null || newData.isNull();
         if (isOldNull && isNewNull) {
@@ -120,9 +123,9 @@ public class BinLogImpl implements BinLog {
         return parser;
     }
 
-    private static Set<String> standardTableNames(String ... tableNames) {
+    private static Set<String> standardTableNames(String... tableNames) {
         Set<String> set = new HashSet<>();
-        for (String tableName: tableNames) {
+        for (String tableName : tableNames) {
             set.add(DatabaseIdentifiers.comparableIdentifier(tableName));
         }
         return set;

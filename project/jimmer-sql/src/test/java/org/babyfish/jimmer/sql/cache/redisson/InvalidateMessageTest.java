@@ -1,7 +1,5 @@
 package org.babyfish.jimmer.sql.cache.redisson;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.babyfish.jimmer.sql.cache.CacheTracker;
 import org.babyfish.jimmer.sql.common.Constants;
 import org.babyfish.jimmer.sql.common.Tests;
@@ -11,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import java.io.*;
 import java.util.Arrays;
 import java.util.UUID;
+
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule;
 
 public class InvalidateMessageTest extends Tests {
 
@@ -89,8 +89,8 @@ public class InvalidateMessageTest extends Tests {
     }
 
     @Test
-    public void testTypeByJacksonForIssue621() throws JsonProcessingException {
-        String json = new ObjectMapper().writeValueAsString(
+    public void testTypeByJacksonForIssue621() throws Exception {
+        String json = jsonCodecWithoutImmutableModule().writer().writeAsString(
                 new InvalidateMessage(
                         UUID.randomUUID(),
                         new CacheTracker.InvalidateEvent(
@@ -104,9 +104,11 @@ public class InvalidateMessageTest extends Tests {
                 )
         );
 
-        CacheTracker.InvalidateEvent event = new ObjectMapper().readValue(
-                json, InvalidateMessage.class
-        ).toEvent();
+        CacheTracker.InvalidateEvent event = jsonCodecWithoutImmutableModule()
+                .readerFor(InvalidateMessage.class)
+                .read(json)
+                .toEvent();
+
         assertContentEquals(
                 "org.babyfish.jimmer.sql.model.Book[" +
                         "--->a62f7aa3-9490-4612-98b5-98aae0e77120, " +
@@ -118,8 +120,8 @@ public class InvalidateMessageTest extends Tests {
     }
 
     @Test
-    public void testPropByJacksonForIssue621() throws JsonProcessingException {
-        String json = new ObjectMapper().writeValueAsString(
+    public void testPropByJacksonForIssue621() throws Exception {
+        String json = jsonCodecWithoutImmutableModule().writer().writeAsString(
                 new InvalidateMessage(
                         UUID.randomUUID(),
                         new CacheTracker.InvalidateEvent(
@@ -133,9 +135,11 @@ public class InvalidateMessageTest extends Tests {
                 )
         );
 
-        CacheTracker.InvalidateEvent event = new ObjectMapper()
-                .readValue(json, InvalidateMessage.class
-        ).toEvent();
+        CacheTracker.InvalidateEvent event = jsonCodecWithoutImmutableModule()
+                .readerFor(InvalidateMessage.class)
+                .read(json)
+                .toEvent();
+
         assertContentEquals(
                 "org.babyfish.jimmer.sql.model.Book.authors[" +
                         "--->a62f7aa3-9490-4612-98b5-98aae0e77120, " +

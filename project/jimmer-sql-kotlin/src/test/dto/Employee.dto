@@ -2,9 +2,10 @@ export org.babyfish.jimmer.sql.kt.model.hr.Employee
     -> package org.babyfish.jimmer.sql.kt.model.hr.dto
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.databind.annotation.{JsonSerialize, JsonDeserialize}
-import org.babyfish.jimmer.sql.kt.model.hr.{MagicStringSerializer, MagicStringDeserializer}
-import org.babyfish.jimmer.kt.dto.{ KotlinDto, KotlinDtoImmutability }
+import org.babyfish.jimmer.sql.kt.model.hr.{
+    MagicStringSerializer, MagicStringSerializer3, MagicStringDeserializer, MagicStringDeserializer3
+}
+import org.babyfish.jimmer.kt.dto.{KotlinDto, KotlinDtoImmutability}
 
 specification EmployeeSpecificationForIssue735 {
     like/i(employeeName)
@@ -18,8 +19,10 @@ specification EmployeeSpecificationForIssue735 {
 input EmployeeInput {
     #allScalars
 
-    @JsonSerialize(using = MagicStringSerializer::class)
-    @JsonDeserialize(using = MagicStringDeserializer::class)
+    @tools.jackson.databind.annotation.JsonSerialize(using = MagicStringSerializer3::class)
+    @tools.jackson.databind.annotation.JsonDeserialize(using = MagicStringDeserializer3::class)
+    @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = MagicStringSerializer::class)
+    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = MagicStringDeserializer::class)
     @JsonFormat(pattern = "[^%]+")
     employeeName as name
 }

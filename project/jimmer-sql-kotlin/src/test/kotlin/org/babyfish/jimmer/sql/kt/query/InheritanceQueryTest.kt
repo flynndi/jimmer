@@ -160,10 +160,20 @@ class InheritanceQueryTest : AbstractQueryTest() {
                     |from SERVER tb_1_""".trimMargin()
             )
             rows(
-                """[
-                    |{"id":1,"hostName":"internal_server","arm":true,"ssd":true},
-                    |{"id":2,"hostName":"external_server","arm":false,"ssd":false}
-                    |]""".trimMargin()
+                listOf(
+                    Server {
+                        id = 1
+                        hostName = "internal_server"
+                        isArm = true
+                        isSsd = true
+                    },
+                    Server {
+                        id = 2
+                        hostName = "external_server"
+                        isArm = false
+                        isSsd = false
+                    }
+                )
             )
         }
     }

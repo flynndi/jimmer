@@ -1,13 +1,14 @@
 package org.babyfish.jimmer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import org.babyfish.jimmer.jackson.ImmutableModule;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.model.TreeNode;
 import org.babyfish.jimmer.model.TreeNodeDraft;
+import org.babyfish.jimmer.jackson.codec.PropertyNamingCustomization;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
+import static org.babyfish.jimmer.jackson.codec.PropertyNamingCustomization.PropertyNaming.SNAKE_CASE;
 
 public class TreeNodeTest {
 
@@ -91,7 +92,7 @@ public class TreeNodeTest {
     }
 
     @Test
-    public void testJsonProperty() throws JsonProcessingException {
+    public void testJsonProperty() throws Exception {
         TreeNode treeNode = TreeNodeDraft.$.produce(child -> {
             child.setName("child");
             child.applyParent(parent -> {
@@ -105,63 +106,62 @@ public class TreeNodeTest {
         );
         Assertions.assertEquals(
                 treeNode,
-                new ObjectMapper().registerModule(new ImmutableModule()).readValue(json, TreeNode.class)
+                jsonCodec().readerFor(TreeNode.class).read(json)
         );
     }
 
     @Test
-    public void testJsonAlias() throws JsonProcessingException {
+    public void testJsonAlias() throws Exception {
         Assertions.assertEquals(
                 (
                         "{" +
-                        "--->\"name\":\"Root\"," +
-                        "--->\"childNodes\":[" +
-                        "--->--->{" +
-                        "--->--->--->\"name\":\"Food\"," +
-                        "--->--->--->\"childNodes\":[" +
-                        "--->--->--->--->{" +
-                        "--->--->--->--->--->\"name\":\"Drink\"," +
-                        "--->--->--->--->--->\"childNodes\":[" +
-                        "--->--->--->--->--->--->{" +
-                        "--->--->--->--->--->--->--->\"name\":\"Coco Cola\"" +
-                        "--->--->--->--->--->--->}," +
-                        "--->--->--->--->--->--->{" +
-                        "--->--->--->--->--->--->--->\"name\":\"Fanta\"" +
-                        "--->--->--->--->--->--->}" +
-                        "--->--->--->--->--->]" +
-                        "--->--->--->--->}" +
-                        "--->--->--->]" +
-                        "--->--->}" +
-                        "--->]" +
-                        "}"
-                ).replace("--->", ""),
-                new ObjectMapper().registerModule(new ImmutableModule()).readValue(
-                        (
-                                "{" +
                                 "--->\"name\":\"Root\"," +
-                                "--->\"children\":[" +
+                                "--->\"childNodes\":[" +
                                 "--->--->{" +
                                 "--->--->--->\"name\":\"Food\"," +
-                                "--->--->--->\"all-child-nodes\":[" +
+                                "--->--->--->\"childNodes\":[" +
                                 "--->--->--->--->{" +
                                 "--->--->--->--->--->\"name\":\"Drink\"," +
-                                "--->--->--->--->--->\"all-child-nodes\":[" +
-                                "--->--->--->--->--->--->{\"name\":\"Coco Cola\"}," +
-                                "--->--->--->--->--->--->{\"name\":\"Fanta\"}" +
+                                "--->--->--->--->--->\"childNodes\":[" +
+                                "--->--->--->--->--->--->{" +
+                                "--->--->--->--->--->--->--->\"name\":\"Coco Cola\"" +
+                                "--->--->--->--->--->--->}," +
+                                "--->--->--->--->--->--->{" +
+                                "--->--->--->--->--->--->--->\"name\":\"Fanta\"" +
+                                "--->--->--->--->--->--->}" +
                                 "--->--->--->--->--->]" +
                                 "--->--->--->--->}" +
                                 "--->--->--->]" +
                                 "--->--->}" +
                                 "--->]" +
                                 "}"
-                        ).replace("--->", ""),
-                        TreeNode.class
+                ).replace("--->", ""),
+                jsonCodec().readerFor(TreeNode.class).read(
+                        (
+                                "{" +
+                                        "--->\"name\":\"Root\"," +
+                                        "--->\"children\":[" +
+                                        "--->--->{" +
+                                        "--->--->--->\"name\":\"Food\"," +
+                                        "--->--->--->\"all-child-nodes\":[" +
+                                        "--->--->--->--->{" +
+                                        "--->--->--->--->--->\"name\":\"Drink\"," +
+                                        "--->--->--->--->--->\"all-child-nodes\":[" +
+                                        "--->--->--->--->--->--->{\"name\":\"Coco Cola\"}," +
+                                        "--->--->--->--->--->--->{\"name\":\"Fanta\"}" +
+                                        "--->--->--->--->--->]" +
+                                        "--->--->--->--->}" +
+                                        "--->--->--->]" +
+                                        "--->--->}" +
+                                        "--->]" +
+                                        "}"
+                        ).replace("--->", "")
                 ).toString()
         );
     }
 
     @Test
-    public void testNamingStrategy() throws JsonProcessingException {
+    public void testNamingStrategy() throws Exception {
         TreeNode treeNode = TreeNodeDraft.$.produce(root -> {
             root.setName("Root").addIntoChildNodes(food -> {
                 food
@@ -180,9 +180,7 @@ public class TreeNodeTest {
                 ;
             });
         });
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new ImmutableModule());
-        mapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        JsonCodec<?> codec = jsonCodec().withCustomizations(new PropertyNamingCustomization(SNAKE_CASE));
 
         String json =
                 "{" +
@@ -205,11 +203,11 @@ public class TreeNodeTest {
         json = json.replace("--->", "");
         Assertions.assertEquals(
                 json,
-                mapper.writeValueAsString(treeNode)
+                codec.writer().writeAsString(treeNode)
         );
         Assertions.assertEquals(
                 json,
-                mapper.readValue(json, TreeNode.class).toString()
+                codec.readerFor(TreeNode.class).read(json).toString()
                         .replace("childNodes", "child_nodes")
         );
     }

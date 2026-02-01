@@ -1,7 +1,5 @@
 package org.babyfish.jimmer.sql.cache;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.JSqlClient;
@@ -18,9 +16,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class FilterCacheEvictTest extends AbstractQueryTest {
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+public class FilterCacheEvictTest extends AbstractQueryTest {
 
     private JSqlClient sqlClient;
 
@@ -72,15 +70,16 @@ public class FilterCacheEvictTest extends AbstractQueryTest {
                     try {
                         sqlClient.getBinLog().accept(
                                 "file",
-                                MAPPER.readTree("{\"id\":9, \"parent_id\":8}"),
-                                MAPPER.readTree("{\"id\":9, \"parent_id\":2}")
+                                jsonCodec().treeReader().read("{\"id\":9, \"parent_id\":8}"),
+                                jsonCodec().treeReader().read("{\"id\":9, \"parent_id\":2}")
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;
                 },
-                ctx -> {}
+                ctx -> {
+                }
         );
         Assertions.assertEquals(
                 "[File.parent-9, File.childFiles-8, File.childFiles-2]",
@@ -95,10 +94,10 @@ public class FilterCacheEvictTest extends AbstractQueryTest {
                     try {
                         sqlClient.getBinLog().accept(
                                 "file_user_mapping",
-                                MAPPER.readTree("{\"file_id\":28, \"user_id\":2}"),
+                                jsonCodec().treeReader().read("{\"file_id\":28, \"user_id\":2}"),
                                 null
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;

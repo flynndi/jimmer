@@ -1,6 +1,6 @@
 package org.babyfish.jimmer.sql.cache.spi;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.lang.NewChain;
 import org.babyfish.jimmer.sql.cache.CacheCreator;
 import org.babyfish.jimmer.sql.cache.CacheLocker;
@@ -87,7 +87,7 @@ public abstract class AbstractCacheCreator implements CacheCreator {
         if (args == null) {
             this.args = args = newArgs(cfg);
         }
-        return (A)args;
+        return (A) args;
     }
 
     protected abstract Args newArgs(Cfg cfg);
@@ -105,7 +105,7 @@ public abstract class AbstractCacheCreator implements CacheCreator {
         @SuppressWarnings("unchecked")
         public <T extends Cfg> T as(Class<T> type) {
             if (this.getClass() == type) {
-                return (T)this;
+                return (T) this;
             }
             if (prev != null) {
                 return prev.as(type);
@@ -118,12 +118,12 @@ public abstract class AbstractCacheCreator implements CacheCreator {
 
         final RedisConnectionFactory connectionFactory;
 
-        final ObjectMapper objectMapper;
+        final JsonCodec<?> jsonCodec;
 
-        private Root(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        private Root(RedisConnectionFactory connectionFactory, JsonCodec<?> jsonCodec) {
             super(null);
             this.connectionFactory = Objects.requireNonNull(connectionFactory, "connectionFactory cannot be null");
-            this.objectMapper = objectMapper;
+            this.jsonCodec = jsonCodec;
         }
     }
 
@@ -250,7 +250,7 @@ public abstract class AbstractCacheCreator implements CacheCreator {
         public final CacheTracker tracker;
 
         public final Duration multiVewDuration;
-        
+
         public final boolean useMultiViewLocalCache;
         public final int multiViewLocalCacheMaximumSize;
         public final Duration multiViewLocalCacheDuration;

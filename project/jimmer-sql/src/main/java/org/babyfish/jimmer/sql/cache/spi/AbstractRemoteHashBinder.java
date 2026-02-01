@@ -1,15 +1,14 @@
 package org.babyfish.jimmer.sql.cache.spi;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.cache.CacheTracker;
 import org.babyfish.jimmer.sql.cache.RemoteKeyPrefixProvider;
-import org.babyfish.jimmer.sql.exception.SerializationException;
 import org.babyfish.jimmer.sql.cache.chain.LockableBinder;
+import org.babyfish.jimmer.sql.exception.SerializationException;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
@@ -21,12 +20,12 @@ public abstract class AbstractRemoteHashBinder<K, V>
             @Nullable ImmutableType type,
             @Nullable ImmutableProp prop,
             @Nullable CacheTracker tracker,
-            @Nullable ObjectMapper objectMapper,
+            @Nullable JsonCodec<?> jsonCodec,
             @Nullable RemoteKeyPrefixProvider keyPrefixProvider,
             Duration duration,
             int randomPercent
     ) {
-        super(type, prop, tracker, objectMapper, keyPrefixProvider, duration, randomPercent);
+        super(type, prop, tracker, jsonCodec, keyPrefixProvider, duration, randomPercent);
     }
 
     @Override
@@ -72,11 +71,11 @@ public abstract class AbstractRemoteHashBinder<K, V>
                 builder.append("\"");
                 builder.append(e.getKey());
                 builder.append("\":");
-                builder.append(objectMapper.writeValueAsString(e.getValue()));
+                builder.append(jsonCodec.writer().writeAsString(e.getValue()));
             }
             builder.append("}");
             return builder.toString();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             throw new SerializationException(ex);
         }
     }

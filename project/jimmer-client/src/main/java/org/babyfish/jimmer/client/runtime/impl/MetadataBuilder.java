@@ -186,7 +186,7 @@ public class MetadataBuilder implements Metadata.Builder {
                     for (TypeDefinition definition : schema.getTypeDefinitionMap().values()) {
                         definitionMap.putIfAbsent(definition.getTypeName(), (TypeDefinitionImpl<Void>) definition);
                     }
-                } catch (IOException ex) {
+                } catch (Exception ex) {
                     throw new IllegalStateException("Failed to load resources \"" + url + "\"", ex);
                 }
             }

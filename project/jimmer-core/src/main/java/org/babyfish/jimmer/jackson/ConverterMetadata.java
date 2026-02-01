@@ -1,7 +1,5 @@
 package org.babyfish.jimmer.jackson;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import org.babyfish.jimmer.impl.util.ClassCache;
 import org.babyfish.jimmer.lang.Generics;
 import org.jetbrains.annotations.NotNull;
@@ -23,25 +21,17 @@ public class ConverterMetadata {
 
     final Type targetType;
 
-    final JavaType sourceJacksonType;
-
-    final JavaType targetJacksonType;
-
     final Converter<?, ?> converter;
 
-    private ListMetadata listMetadata;
+    private ListConverterMetadata listMetadata;
 
     ConverterMetadata(
             Type sourceType,
             Type targetType,
-            JavaType sourceJacksonType,
-            JavaType targetJacksonType,
             Converter<?, ?> converter
     ) {
         this.sourceType = sourceType;
         this.targetType = targetType;
-        this.sourceJacksonType = sourceJacksonType;
-        this.targetJacksonType = targetJacksonType;
         this.converter = converter;
     }
 
@@ -51,14 +41,6 @@ public class ConverterMetadata {
 
     public Type getTargetType() {
         return targetType;
-    }
-
-    public JavaType getSourceJacksonType() {
-        return sourceJacksonType;
-    }
-
-    public JavaType getTargetJacksonType() {
-        return targetJacksonType;
     }
 
     @SuppressWarnings("unchecked")
@@ -71,9 +53,9 @@ public class ConverterMetadata {
     }
 
     public ConverterMetadata toListMetadata() {
-        ListMetadata listMetadata = this.listMetadata;
+        ListConverterMetadata listMetadata = this.listMetadata;
         if (listMetadata == null) {
-            this.listMetadata = listMetadata = new ListMetadata();
+            this.listMetadata = listMetadata = new ListConverterMetadata(this);
         }
         return listMetadata;
     }
@@ -99,8 +81,6 @@ public class ConverterMetadata {
             );
         }
         Constructor<?> constructor;
-        JavaType sourceJacksonType = JacksonUtils.getJacksonType(sourceType);
-        JavaType targetJacksonType = JacksonUtils.getJacksonType(targetType);
         try {
             constructor = converterClass.getConstructor();
         } catch (NoSuchMethodException ex) {
@@ -128,30 +108,15 @@ public class ConverterMetadata {
                     ex.getTargetException()
             );
         }
-        return new ConverterMetadata(sourceType, targetType, sourceJacksonType, targetJacksonType, converter);
+        return new ConverterMetadata(sourceType, targetType, converter);
     }
 
-    private class ListMetadata extends ConverterMetadata {
-
-        public ListMetadata() {
+    private static class ListConverterMetadata extends ConverterMetadata {
+        ListConverterMetadata(ConverterMetadata converterMetadata) {
             super(
-                    Generics.makeParameterizedType(List.class, ConverterMetadata.this.sourceType),
-                    Generics.makeParameterizedType(List.class, ConverterMetadata.this.targetType),
-                    CollectionType.construct(
-                            List.class,
-                            null,
-                            null,
-                            null,
-                            ConverterMetadata.this.sourceJacksonType
-                    ),
-                    CollectionType.construct(
-                            List.class,
-                            null,
-                            null,
-                            null,
-                            ConverterMetadata.this.targetJacksonType
-                    ),
-                    new ListConverter(ConverterMetadata.this.converter)
+                    Generics.makeParameterizedType(List.class, converterMetadata.sourceType),
+                    Generics.makeParameterizedType(List.class, converterMetadata.targetType),
+                    new ListConverter(converterMetadata.converter)
             );
         }
 
@@ -162,12 +127,11 @@ public class ConverterMetadata {
     }
 
     private static class ListConverter implements Converter<List<?>, List<?>> {
-
         private final Converter<Object, Object> converter;
 
         @SuppressWarnings("unchecked")
-        private ListConverter(Converter<?, ?> converter) {
-            this.converter = (Converter<Object, Object>)converter;
+        public ListConverter(Converter<?, ?> converter) {
+            this.converter = (Converter<Object, Object>) converter;
         }
 
         @NotNull

@@ -1,6 +1,6 @@
 package org.babyfish.jimmer.sql.cache.spi;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.cache.CacheTracker;
@@ -19,12 +19,12 @@ public abstract class AbstractRemoteValueBinder<K, V>
             @Nullable ImmutableType type,
             @Nullable ImmutableProp prop,
             @Nullable CacheTracker tracker,
-            @Nullable ObjectMapper objectMapper,
+            @Nullable JsonCodec<?> jsonCodec,
             @Nullable RemoteKeyPrefixProvider keyPrefixProvider,
             Duration duration,
             int randomPercent
     ) {
-        super(type, prop, tracker, objectMapper, keyPrefixProvider, duration, randomPercent);
+        super(type, prop, tracker, jsonCodec, keyPrefixProvider, duration, randomPercent);
     }
 
     @Override

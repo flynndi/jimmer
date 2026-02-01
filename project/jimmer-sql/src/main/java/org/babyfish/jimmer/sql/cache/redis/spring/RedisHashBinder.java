@@ -1,6 +1,6 @@
 package org.babyfish.jimmer.sql.cache.redis.spring;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.cache.CacheTracker;
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
  * framework-related classes should not be included in the jimmer-sql module.<br>
  * <br>
  * Redis-related caching should be implemented through framework-specific extensions.
+ *
  * @see "org.babyfish.jimmer.spring.cache.RedisHashBinder(Provided by jimmer-spring-boot-starter)"
  */
 @Deprecated
@@ -34,7 +35,7 @@ public class RedisHashBinder<K, V> extends AbstractRemoteHashBinder<K, V> {
             @Nullable ImmutableType type,
             @Nullable ImmutableProp prop,
             @Nullable CacheTracker tracker,
-            @Nullable ObjectMapper objectMapper,
+            @Nullable JsonCodec<?> jsonCodec,
             @Nullable RemoteKeyPrefixProvider keyPrefixProvider,
             @NotNull Duration duration,
             int randomPercent,
@@ -44,7 +45,7 @@ public class RedisHashBinder<K, V> extends AbstractRemoteHashBinder<K, V> {
                 type,
                 prop,
                 tracker,
-                objectMapper,
+                jsonCodec,
                 keyPrefixProvider,
                 duration,
                 randomPercent
@@ -55,11 +56,11 @@ public class RedisHashBinder<K, V> extends AbstractRemoteHashBinder<K, V> {
     @SuppressWarnings("unchecked")
     @Override
     protected List<byte[]> read(Collection<String> keys, String hashKey) {
-        return (List<byte[]>)(List<?>)operations.executePipelined(
+        return (List<byte[]>) (List<?>) operations.executePipelined(
                 new SessionCallback<Void>() {
                     @Override
                     public <XK, XV> Void execute(RedisOperations<XK, XV> pops) throws DataAccessException {
-                        RedisOperations<String, byte[]> pipelinedOps = (RedisOperations<String, byte[]>)pops;
+                        RedisOperations<String, byte[]> pipelinedOps = (RedisOperations<String, byte[]>) pops;
                         for (String key : keys) {
                             pipelinedOps.opsForHash().get(key, hashKey);
                         }
@@ -76,7 +77,7 @@ public class RedisHashBinder<K, V> extends AbstractRemoteHashBinder<K, V> {
                 new SessionCallback<Void>() {
                     @Override
                     public <XK, XV> Void execute(RedisOperations<XK, XV> pops) throws DataAccessException {
-                        RedisOperations<String, byte[]> pipelinedOps = (RedisOperations<String, byte[]>)pops;
+                        RedisOperations<String, byte[]> pipelinedOps = (RedisOperations<String, byte[]>) pops;
                         for (Map.Entry<String, byte[]> e : map.entrySet()) {
                             pipelinedOps.opsForHash().put(e.getKey(), hashKey, e.getValue());
                             pipelinedOps.expire(
@@ -134,7 +135,7 @@ public class RedisHashBinder<K, V> extends AbstractRemoteHashBinder<K, V> {
                     type,
                     prop,
                     tracker,
-                    objectMapper,
+                    jsonCodec,
                     keyPrefixProvider,
                     duration,
                     randomPercent,

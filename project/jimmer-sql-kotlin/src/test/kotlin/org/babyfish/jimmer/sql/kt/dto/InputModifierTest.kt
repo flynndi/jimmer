@@ -1,7 +1,7 @@
 package org.babyfish.jimmer.sql.kt.dto
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.babyfish.jimmer.Input
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule
 import org.babyfish.jimmer.sql.kt.common.assertContent
 import org.babyfish.jimmer.sql.kt.model.classic.book.dto.*
 import kotlin.reflect.KClass
@@ -19,7 +19,9 @@ class InputModifierTest {
             |"edition": 1,
             |"price": 49.9
             |}""".trimMargin()
-        val input = jacksonObjectMapper().readValue(json, MixedBookInput::class.java)
+        val input = jsonCodecWithoutImmutableModule()
+            .readerFor(MixedBookInput::class.java)
+            .read(json)
         assertContent(
             """MixedBookInput(
                 |--->id=100, 
@@ -48,7 +50,9 @@ class InputModifierTest {
             |"edition": 1,
             |"price": 49.9
             |}""".trimMargin()
-        val input = jacksonObjectMapper().readValue(json, MixedBookInput::class.java)
+        val input = jsonCodecWithoutImmutableModule()
+            .readerFor(MixedBookInput::class.java)
+            .read(json)
         assertContent(
             """MixedBookInput(
                 |--->id=null, 
@@ -75,9 +79,11 @@ class InputModifierTest {
             |"edition": 1,
             |"price": 49.9
             |}""".trimMargin()
-        val ex = assertFails {
-            jacksonObjectMapper().readValue(json, MixedBookInput::class.java)
-        }
+
+        val reader = jsonCodecWithoutImmutableModule()
+            .readerFor(MixedBookInput::class.java)
+
+        val ex = assertFails { reader.read(json) }
         expect(
             """An object whose type is 
                 |"org.babyfish.jimmer.sql.kt.model.classic.book.dto.MixedBookInput" 
@@ -100,7 +106,9 @@ class InputModifierTest {
             |"edition": 1,
             |"price": 49.9
             |}""".trimMargin()
-        val input = jacksonObjectMapper().readValue(json, MixedBookInput::class.java)
+        val input = jsonCodecWithoutImmutableModule()
+            .readerFor(MixedBookInput::class.java)
+            .read(json)
         assertContent(
             """MixedBookInput(
                 |--->id=100, 
@@ -127,7 +135,9 @@ class InputModifierTest {
             |"edition": 1,
             |"price": 49.9
             |}""".trimMargin()
-        val input = jacksonObjectMapper().readValue(json, MixedBookInput::class.java)
+        val input = jsonCodecWithoutImmutableModule()
+            .readerFor(MixedBookInput::class.java)
+            .read(json)
         assertContent(
             """MixedBookInput(
                 |--->id=100, 
@@ -155,7 +165,9 @@ class InputModifierTest {
             |"edition": null,
             |"price": 49.9
             |}""".trimMargin()
-        val input = jacksonObjectMapper().readValue(json, MixedBookInput::class.java)
+        val input = jsonCodecWithoutImmutableModule()
+            .readerFor(MixedBookInput::class.java)
+            .read(json)
         assertContent(
             """MixedBookInput(
                 |--->id=100, 
@@ -182,7 +194,9 @@ class InputModifierTest {
             |"name": "SQL in Action",
             |"price": 49.9
             |}""".trimMargin()
-        val input = jacksonObjectMapper().readValue(json, MixedBookInput::class.java)
+        val input = jsonCodecWithoutImmutableModule()
+            .readerFor(MixedBookInput::class.java)
+            .read(json)
         assertContent(
             """MixedBookInput(
                 |--->id=100, 
@@ -209,7 +223,9 @@ class InputModifierTest {
             |"edition": 1,
             |"price": null
             |}""".trimMargin()
-        val input = jacksonObjectMapper().readValue(json, MixedBookInput::class.java)
+        val input = jsonCodecWithoutImmutableModule()
+            .readerFor(MixedBookInput::class.java)
+            .read(json)
         assertContent(
             """MixedBookInput(
                 |--->id=100, 
@@ -235,7 +251,9 @@ class InputModifierTest {
             |"name": "SQL in Action",
             |"edition": 1
             |}""".trimMargin()
-        val input = jacksonObjectMapper().readValue(json, MixedBookInput::class.java)
+        val input = jsonCodecWithoutImmutableModule()
+            .readerFor(MixedBookInput::class.java)
+            .read(json)
         assertContent(
             """MixedBookInput(
                 |--->id=100, 
@@ -332,13 +350,13 @@ class InputModifierTest {
     }
 
     companion object {
-        private fun <T: Input<*>> assertNullParent(
+        private fun <T : Input<*>> assertNullParent(
             json: String,
             type: KClass<T>,
             dtoJson: String,
             entityJson: String
         ) {
-            val input = jacksonObjectMapper().readValue(json, type.java)
+            val input = jsonCodecWithoutImmutableModule().readerFor(type.java).read(json)
             assertContent(dtoJson, input)
             assertContent(entityJson, input.toEntity())
         }

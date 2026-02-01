@@ -1,7 +1,7 @@
 package org.babyfish.jimmer.kt
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.babyfish.jimmer.jackson.ImmutableModuleRequiredException
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule
 import org.babyfish.jimmer.kt.model.Book
 import org.babyfish.jimmer.kt.model.by
 import kotlin.test.Test
@@ -13,7 +13,7 @@ class NoImmutableModuleTest {
     @Test
     fun test() {
         assertFailsWith(Throwable::class) {
-            ObjectMapper().writeValueAsString(
+            jsonCodecWithoutImmutableModule().writer().writeAsString(
                 new(Book::class).by {}
             )
         }.cause.let {

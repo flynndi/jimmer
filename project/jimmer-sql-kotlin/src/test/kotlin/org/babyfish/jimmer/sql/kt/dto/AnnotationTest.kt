@@ -1,7 +1,6 @@
 package org.babyfish.jimmer.sql.kt.dto
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule
 import org.babyfish.jimmer.sql.kt.common.assertContent
 import org.babyfish.jimmer.sql.kt.model.classic.book.dto.BookViewForIssue843
 import org.babyfish.jimmer.sql.kt.model.dto.UserView
@@ -38,7 +37,7 @@ class AnnotationTest {
         )
         assertContent(
             """{"id":3,"name":"RUST programming","price":53.4}""",
-            ObjectMapper().writeValueAsString(view)
+            jsonCodecWithoutImmutableModule().writer().writeAsString(view)
         )
     }
 }

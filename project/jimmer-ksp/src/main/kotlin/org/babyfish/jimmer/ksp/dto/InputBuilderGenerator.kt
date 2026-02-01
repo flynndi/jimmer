@@ -199,6 +199,7 @@ class InputBuilderGenerator(
     companion object {
 
         private val JACKSON_ANNO_PREFIXIES = arrayOf(
+            "tools.jackson.databind.annotation.",
             "com.fasterxml.jackson.databind.annotation.",
             "com.fasterxml.jackson.annotation."
         )

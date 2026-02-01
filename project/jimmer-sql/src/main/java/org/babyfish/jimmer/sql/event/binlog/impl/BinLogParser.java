@@ -1,10 +1,8 @@
 package org.babyfish.jimmer.sql.event.binlog.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.babyfish.jimmer.impl.util.PropCache;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
+import org.babyfish.jimmer.jackson.codec.Node;
 import org.babyfish.jimmer.lang.Lazy;
 import org.babyfish.jimmer.meta.*;
 import org.babyfish.jimmer.runtime.DraftSpi;
@@ -25,6 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule;
+
 public class BinLogParser {
 
     private final Map<String, BinLogPropReader> readerMap = new HashMap<>();
@@ -33,26 +33,21 @@ public class BinLogParser {
 
     private final PropCache<BinLogPropReader> readerCache = new PropCache<>(this::createReader, true);
 
-    private ObjectMapper mapper;
+    private JsonCodec<?> jsonCodec;
 
     private JSqlClientImplementor sqlClient;
 
     public BinLogParser initialize(
             JSqlClientImplementor sqlClient,
-            ObjectMapper mapper,
+            @Nullable JsonCodec<?> jsonCodec,
             Map<ImmutableProp, BinLogPropReader> propReaderMap,
             Map<Class<?>, BinLogPropReader> typePropReaderMap
     ) {
         if (sqlClient == null) {
             throw new IllegalArgumentException("`sqlClient` cannot be null");
         }
-        ObjectMapper clonedMapper = mapper != null ?
-                new ObjectMapper(mapper) {} :
-                new ObjectMapper();
-        clonedMapper
-                .registerModule(new BinLogModule(this))
-                .registerModule(new JavaTimeModule());
-        this.mapper = clonedMapper;
+        JsonCodec<?> codec = jsonCodec != null ? jsonCodec : jsonCodecWithoutImmutableModule();
+        this.jsonCodec = codec.withCustomizations(new BinLogModuleCustomization(this));
         this.sqlClient = sqlClient;
         Map<String, BinLogPropReader> propNameReaderMap = new HashMap<>();
         for (ImmutableType type : sqlClient.getEntityManager().getAllTypes(sqlClient.getMicroServiceName())) {
@@ -81,13 +76,13 @@ public class BinLogParser {
             return null;
         }
         try {
-            return mapper().readValue(json, type);
-        } catch (JsonProcessingException ex) {
+            return jsonCodec().readerFor(type).read(json);
+        } catch (Exception ex) {
             throw new IllegalArgumentException("Illegal json: " + json, ex);
         }
     }
 
-    public <T> T parseEntity(@NotNull Class<T> type, JsonNode data) {
+    public <T> T parseEntity(@NotNull Class<T> type, Node data) {
         if (data == null || data.isNull()) {
             return null;
         }
@@ -95,22 +90,15 @@ public class BinLogParser {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T parseEntity(@NotNull ImmutableType type, String json) {
+    public <T> T parseEntity(@NotNull ImmutableType type, Node data) {
         if (type instanceof AssociationType) {
             throw new IllegalArgumentException("type cannot be AssociationType");
         }
-        return (T)parseEntity(type.getJavaClass(), json);
-    }
-
-    public <T> T parseEntity(@NotNull ImmutableType type, JsonNode data) {
-        if (data == null || data.isNull()) {
-            return null;
-        }
-        return parseEntity(type, data.toString());
+        return (T) parseEntity(type.getJavaClass(), data);
     }
 
     @SuppressWarnings("unchecked")
-    public <S, T> MiddleRow<S, T> parseMiddleRow(@NotNull AssociationType associationType, JsonNode data) {
+    public <S, T> MiddleRow<S, T> parseMiddleRow(@NotNull AssociationType associationType, Node data) {
         AssociationProp sourceProp = associationType.getSourceProp();
         AssociationProp targetProp = associationType.getTargetProp();
         ImmutableProp sourceIdProp = sourceProp.getTargetType().getIdProp();
@@ -131,9 +119,9 @@ public class BinLogParser {
         Object filteredValue = null;
 
         // Low version jackson does not support `properties`
-        Iterator<Map.Entry<String, JsonNode>> fieldEntryItr = data.fields();
+        Iterator<Map.Entry<String, Node>> fieldEntryItr = data.fieldsIterator();
         while (fieldEntryItr.hasNext()) {
-            Map.Entry<String, JsonNode> e = fieldEntryItr.next();
+            Map.Entry<String, Node> e = fieldEntryItr.next();
             String columnName = e.getKey();
             String comparableColumnName = DatabaseIdentifiers.comparableIdentifier(columnName);
             if (comparableColumnName.equals(deletedColumnName)) {
@@ -193,20 +181,20 @@ public class BinLogParser {
         if (json == null || json.isEmpty()) {
             return null;
         }
-        JsonNode data;
+        Node data;
         try {
-            data = mapper().readTree(json);
-        } catch (JsonProcessingException ex) {
+            data = jsonCodec().treeReader().read(json);
+        } catch (Exception ex) {
             throw new IllegalArgumentException("Illegal json: " + json, ex);
         }
         return parseMiddleRow(associationType, data);
     }
 
-    public <S, T> MiddleRow<S, T> parseMiddleRow(@NotNull TypedProp<?, ?> prop, JsonNode data) {
+    public <S, T> MiddleRow<S, T> parseMiddleRow(@NotNull TypedProp<?, ?> prop, Node data) {
         return parseMiddleRow(AssociationType.of(prop.unwrap()), data);
     }
 
-    public <S, T> MiddleRow<S, T> parseMiddleRow(@NotNull ImmutableProp prop, JsonNode data) {
+    public <S, T> MiddleRow<S, T> parseMiddleRow(@NotNull ImmutableProp prop, Node data) {
         return parseMiddleRow(AssociationType.of(prop), data);
     }
 
@@ -256,14 +244,14 @@ public class BinLogParser {
         return typeReaderMap.get(prop.getElementClass());
     }
 
-    private ObjectMapper mapper() {
-        ObjectMapper mapper = this.mapper;
-        if (mapper == null) {
+    private JsonCodec<?> jsonCodec() {
+        JsonCodec<?> jsonCodec = this.jsonCodec;
+        if (jsonCodec == null) {
             throw new IllegalStateException(
                     "The binlog is not ready because the initialization of sqlClient is 'MANUAL' " +
                             "but the sqlClient is not initialized"
             );
         }
-        return mapper;
+        return jsonCodec;
     }
 }

@@ -1,11 +1,5 @@
 package org.babyfish.jimmer.client.meta.impl;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.babyfish.jimmer.client.meta.Doc;
 import org.babyfish.jimmer.client.meta.Prop;
 import org.babyfish.jimmer.client.meta.TypeRef;
@@ -14,8 +8,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Properties;
 
-@JsonSerialize(using = PropImpl.Serializer.class)
-@JsonDeserialize(using = PropImpl.Deserializer.class)
+@com.fasterxml.jackson.databind.annotation.JsonSerialize(using = PropImpl.SerializerV2.class)
+@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = PropImpl.DeserializerV2.class)
+@tools.jackson.databind.annotation.JsonSerialize(using = PropImpl.SerializerV3.class)
+@tools.jackson.databind.annotation.JsonDeserialize(using = PropImpl.DeserializerV3.class)
 public class PropImpl<S> extends AstNode<S> implements Prop {
 
     private String name;
@@ -87,10 +83,12 @@ public class PropImpl<S> extends AstNode<S> implements Prop {
         }
     }
 
-    public static class Serializer extends JsonSerializer<PropImpl<?>> {
+    static class SerializerV2 extends com.fasterxml.jackson.databind.JsonSerializer<PropImpl<?>> {
 
         @Override
-        public void serialize(PropImpl<?> prop, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        public void serialize(PropImpl<?> prop,
+                              com.fasterxml.jackson.core.JsonGenerator gen,
+                              com.fasterxml.jackson.databind.SerializerProvider provider) throws IOException {
             gen.writeStartObject();
             gen.writeFieldName("name");
             gen.writeString(prop.getName());
@@ -102,12 +100,46 @@ public class PropImpl<S> extends AstNode<S> implements Prop {
         }
     }
 
-    public static class Deserializer extends JsonDeserializer<PropImpl<?>> {
+    static class DeserializerV2 extends com.fasterxml.jackson.databind.JsonDeserializer<PropImpl<?>> {
 
         @SuppressWarnings("unchecked")
         @Override
-        public PropImpl<?> deserialize(JsonParser jp, DeserializationContext ctx) throws IOException, JacksonException {
-            JsonNode jsonNode = jp.getCodec().readTree(jp);
+        public PropImpl<?> deserialize(com.fasterxml.jackson.core.JsonParser jp,
+                                       com.fasterxml.jackson.databind.DeserializationContext ctx) throws IOException {
+            com.fasterxml.jackson.databind.JsonNode jsonNode = jp.getCodec().readTree(jp);
+            PropImpl<Object> prop = new PropImpl<>(null, jsonNode.get("name").asText());
+            prop.setType(ctx.readTreeAsValue(jsonNode.get("type"), TypeRefImpl.class));
+            if (jsonNode.has("doc")) {
+                prop.setDoc(ctx.readTreeAsValue(jsonNode.get("doc"), Doc.class));
+            }
+            return prop;
+        }
+    }
+
+    static class SerializerV3 extends tools.jackson.databind.ValueSerializer<PropImpl<?>> {
+
+        @Override
+        public void serialize(PropImpl<?> prop,
+                              tools.jackson.core.JsonGenerator gen,
+                              tools.jackson.databind.SerializationContext ctx) {
+            gen.writeStartObject();
+            gen.writeName("name");
+            gen.writeString(prop.getName());
+            ctx.defaultSerializeProperty("type", prop.getType(), gen);
+            if (prop.getDoc() != null) {
+                ctx.defaultSerializeProperty("doc", prop.getDoc(), gen);
+            }
+            gen.writeEndObject();
+        }
+    }
+
+    static class DeserializerV3 extends tools.jackson.databind.ValueDeserializer<PropImpl<?>> {
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public PropImpl<?> deserialize(tools.jackson.core.JsonParser jp,
+                                       tools.jackson.databind.DeserializationContext ctx) {
+            tools.jackson.databind.JsonNode jsonNode = ctx.readTree(jp);
             PropImpl<Object> prop = new PropImpl<>(null, jsonNode.get("name").asText());
             prop.setType(ctx.readTreeAsValue(jsonNode.get("type"), TypeRefImpl.class));
             if (jsonNode.has("doc")) {

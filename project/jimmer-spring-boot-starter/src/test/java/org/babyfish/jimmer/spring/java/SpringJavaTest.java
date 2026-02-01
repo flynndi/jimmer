@@ -9,13 +9,13 @@ import org.babyfish.jimmer.spring.cfg.SqlClientConfig;
 import org.babyfish.jimmer.spring.client.JavaFeignController;
 import org.babyfish.jimmer.spring.client.OpenApiController;
 import org.babyfish.jimmer.spring.client.OpenApiUiController;
-import org.babyfish.jimmer.spring.java.bll.BookService;
 import org.babyfish.jimmer.spring.client.TypeScriptController;
+import org.babyfish.jimmer.spring.datasource.DataSources;
+import org.babyfish.jimmer.spring.datasource.TxCallback;
+import org.babyfish.jimmer.spring.java.bll.BookService;
 import org.babyfish.jimmer.spring.java.bll.ErrorService;
 import org.babyfish.jimmer.spring.java.bll.resolver.BookStoreNewestBooksResolver;
 import org.babyfish.jimmer.spring.java.dal.BookRepository;
-import org.babyfish.jimmer.spring.datasource.DataSources;
-import org.babyfish.jimmer.spring.datasource.TxCallback;
 import org.babyfish.jimmer.spring.java.dal.BookStoreRepository;
 import org.babyfish.jimmer.spring.java.model.*;
 import org.babyfish.jimmer.spring.java.model.dto.BookSpecification;
@@ -26,7 +26,10 @@ import org.babyfish.jimmer.spring.repository.EnableJimmerRepositories;
 import org.babyfish.jimmer.spring.repository.config.JimmerRepositoryConfigExtension;
 import org.babyfish.jimmer.spring.repository.support.JimmerRepositoryFactoryBean;
 import org.babyfish.jimmer.sql.JSqlClient;
-import org.babyfish.jimmer.sql.runtime.*;
+import org.babyfish.jimmer.sql.runtime.DefaultExecutor;
+import org.babyfish.jimmer.sql.runtime.ExecutionPurpose;
+import org.babyfish.jimmer.sql.runtime.Executor;
+import org.babyfish.jimmer.sql.runtime.JSqlClientImplementor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.*;
@@ -38,7 +41,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
@@ -55,14 +57,15 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
-
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.*;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @SpringBootTest(properties = {
         "jimmer.client.ts.path=/my-ts.zip",
@@ -99,7 +102,7 @@ public class SpringJavaTest extends AbstractTest {
     }
 
     @EnableJimmerRepositories
-    @ConditionalOnMissingBean({ JimmerRepositoryFactoryBean.class, JimmerRepositoryConfigExtension.class })
+    @ConditionalOnMissingBean({JimmerRepositoryFactoryBean.class, JimmerRepositoryConfigExtension.class})
     @Configuration
     static class DuplicatedConfig {
         // Use @EnableJimmerRepositories twice,
@@ -886,7 +889,7 @@ public class SpringJavaTest extends AbstractTest {
         list.add(UUID.fromString("d38c10da-6be8-4924-b9b9-5e81899612a0"));
         Map<UUID, BookStore> map = bookStoreRepository.findMapByIds(list);
         assertContent("{\"id\":\"d38c10da-6be8-4924-b9b9-5e81899612a0\",\n" +
-                "\"name\":\"O'REILLY\"}",
+                        "\"name\":\"O'REILLY\"}",
                 map.get(UUID.fromString("d38c10da-6be8-4924-b9b9-5e81899612a0")));
     }
 
@@ -1014,7 +1017,7 @@ public class SpringJavaTest extends AbstractTest {
                 .andExpect(content().contentTypeCompatibleWith("application/zip"));
     }
 
-    private static void assertTransactionEvents(String ... events) {
+    private static void assertTransactionEvents(String... events) {
         try {
             Assertions.assertEquals(Arrays.asList(events), TRANSACTION_EVENTS);
         } finally {
@@ -1022,7 +1025,7 @@ public class SpringJavaTest extends AbstractTest {
         }
     }
 
-    private static void assertSQLs(String ... statements) {
+    private static void assertSQLs(String... statements) {
         try {
             for (int i = 0; i < Math.min(statements.length, SQL_STATEMENTS.size()); i++) {
                 Assertions.assertEquals(statements[i].replace("--->", ""), SQL_STATEMENTS.get(i), "sql[" + i + ']');

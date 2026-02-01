@@ -34,6 +34,7 @@ import java.io.Reader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -41,6 +42,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class AbstractTest extends Tests {
+
+    protected static final ZoneOffset ZONE_ID = ZoneOffset.ofHours(8);
 
     protected static final String JDBC_URL = "jdbc:h2:./build/h2/jimmer_test_db;database_to_upper=true;time zone=GMT+8";
 
@@ -66,6 +69,7 @@ public class AbstractTest extends Tests {
     private final JSqlClient sqlClient = getSqlClient(it -> {
         UserIdGenerator<?> idGenerator = this::autoId;
         it.setIdGenerator(idGenerator);
+        it.setZoneId(ZONE_ID);
     });
 
     private final LambdaClient lambdaClient = new LambdaClient(getSqlClient());
@@ -106,6 +110,7 @@ public class AbstractTest extends Tests {
 
     protected JSqlClient getSqlClient(Consumer<JSqlClient.Builder> block) {
         JSqlClient.Builder builder = JSqlClient.newBuilder()
+                .setZoneId(ZONE_ID)
                 .setExecutor(new ExecutorImpl())
                 .setDialect(new H2Dialect() {
                     @Override

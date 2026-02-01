@@ -1,6 +1,5 @@
 package org.babyfish.jimmer.sql.embedded;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.babyfish.jimmer.sql.ast.mutation.SaveMode;
 import org.babyfish.jimmer.sql.common.AbstractMutationTest;
 import org.babyfish.jimmer.sql.model.Immutables;
@@ -9,6 +8,8 @@ import org.babyfish.jimmer.sql.model.embedded.TransformDraft;
 import org.babyfish.jimmer.sql.model.embedded.dto.DynamicRectInput;
 import org.babyfish.jimmer.sql.runtime.DbLiteral;
 import org.junit.jupiter.api.Test;
+
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule;
 
 public class EmbeddedMutationTest extends AbstractMutationTest {
 
@@ -50,7 +51,8 @@ public class EmbeddedMutationTest extends AbstractMutationTest {
                         );
                     });
                     ctx.totalRowCount(1);
-                    ctx.entity(it -> {});
+                    ctx.entity(it -> {
+                    });
                 }
         );
     }
@@ -115,13 +117,15 @@ public class EmbeddedMutationTest extends AbstractMutationTest {
         Transform transform = TransformDraft.$.produce(draft -> {
             draft.setId(1L);
             draft.setSource(
-                    new ObjectMapper()
-                            .readValue(sourceJson, DynamicRectInput.class)
+                    jsonCodecWithoutImmutableModule()
+                            .readerFor(DynamicRectInput.class)
+                            .read(sourceJson)
                             .toImmutable()
             );
             draft.setTarget(
-                    new ObjectMapper()
-                            .readValue(targetJson, DynamicRectInput.class)
+                    jsonCodecWithoutImmutableModule()
+                            .readerFor(DynamicRectInput.class)
+                            .read(targetJson)
                             .toImmutable()
             );
         });

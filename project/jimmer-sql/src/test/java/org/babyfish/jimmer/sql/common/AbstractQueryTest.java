@@ -1,9 +1,5 @@
 package org.babyfish.jimmer.sql.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.babyfish.jimmer.jackson.ImmutableModule;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.runtime.ImmutableSpi;
 import org.babyfish.jimmer.sql.ast.Executable;
@@ -15,16 +11,15 @@ import org.opentest4j.AssertionFailedError;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class AbstractQueryTest extends AbstractTest {
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 
-    private static final ObjectMapper MAPPER =
-            new ObjectMapper()
-                    .registerModule(new ImmutableModule())
-                    .registerModule(new JavaTimeModule());
+public class AbstractQueryTest extends AbstractTest {
 
     private List<?> rows;
 
@@ -189,7 +184,7 @@ public class AbstractQueryTest extends AbstractTest {
                 Object exp = variables.get(i);
                 Object act = executions.get(index).getVariables(batchIndex).get(i);
                 if (act instanceof TypedList<?>) {
-                    act = ((TypedList<?>)act).toArray();
+                    act = ((TypedList<?>) act).toArray();
                 }
                 if (act instanceof DbLiteral.DbValue) {
                     act = DbLiteral.unwrap(act);
@@ -227,7 +222,7 @@ public class AbstractQueryTest extends AbstractTest {
 
         @SuppressWarnings("unchecked")
         public QueryTestContext<R> row(int index, Consumer<R> consumer) {
-            consumer.accept((R)rows.get(index));
+            consumer.accept((R) rows.get(index));
             return this;
         }
 
@@ -235,9 +230,9 @@ public class AbstractQueryTest extends AbstractTest {
             try {
                 Assertions.assertEquals(
                         json.replace("--->", ""),
-                        MAPPER.writeValueAsString(rows.get(index))
+                        jsonCodec().writer().writeAsString(rows.get(index))
                 );
-            } catch (JsonProcessingException ex) {
+            } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
             return this;
@@ -247,9 +242,9 @@ public class AbstractQueryTest extends AbstractTest {
             try {
                 Assertions.assertEquals(
                         json.replace("--->", ""),
-                        MAPPER.writeValueAsString(rows)
+                        jsonCodec().writer().writeAsString(rows)
                 );
-            } catch (JsonProcessingException ex) {
+            } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
             return this;
@@ -263,7 +258,7 @@ public class AbstractQueryTest extends AbstractTest {
 
     protected static void assertLoadState(
             Object obj,
-            String ... props
+            String... props
     ) {
         if (obj instanceof List<?>) {
             int index = 0;

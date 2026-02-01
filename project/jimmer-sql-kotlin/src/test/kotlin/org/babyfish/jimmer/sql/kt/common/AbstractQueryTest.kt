@@ -1,6 +1,7 @@
 package org.babyfish.jimmer.sql.kt.common
 
 import com.fasterxml.jackson.core.JsonProcessingException
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec
 import org.babyfish.jimmer.sql.kt.ast.query.KTypedRootQuery
 import java.sql.Connection
 import java.util.function.Consumer
@@ -12,7 +13,7 @@ import kotlin.test.expect
 
 abstract class AbstractQueryTest : AbstractTest() {
 
-    private var maxStatementIndex:Int = -1
+    private var maxStatementIndex: Int = -1
 
     private var rows: List<Any?> = emptyList()
 
@@ -156,7 +157,7 @@ abstract class AbstractQueryTest : AbstractTest() {
 
         fun rows(json: String): QueryTestContext<R> {
             try {
-                contentEquals(json, MAPPER.writeValueAsString(rows))
+                contentEquals(json, jsonCodec().writer().writeAsString(rows))
             } catch (ex: JsonProcessingException) {
                 throw RuntimeException(ex)
             }
@@ -172,7 +173,7 @@ abstract class AbstractQueryTest : AbstractTest() {
     companion object {
 
         @JvmStatic
-        protected fun  expectJson(
+        protected fun expectJson(
             json: String,
             obj: Any
         ) {

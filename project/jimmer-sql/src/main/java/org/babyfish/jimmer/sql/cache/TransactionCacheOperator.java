@@ -1,20 +1,19 @@
 package org.babyfish.jimmer.sql.cache;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.babyfish.jimmer.jackson.ImmutableModule;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.cache.spi.AbstractCacheOperator;
-import org.babyfish.jimmer.sql.runtime.ConnectionManager;
 import org.babyfish.jimmer.sql.exception.ExecutionException;
+import org.babyfish.jimmer.sql.runtime.ConnectionManager;
 import org.babyfish.jimmer.sql.runtime.JSqlClientImplementor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.*;
+
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 
 public class TransactionCacheOperator extends AbstractCacheOperator {
 
@@ -77,7 +76,7 @@ public class TransactionCacheOperator extends AbstractCacheOperator {
                     ID +
                     " in";
 
-    private final ObjectMapper mapper;
+    private final JsonCodec<?> jsonCodec;
 
     private final int batchSize;
 
@@ -89,19 +88,15 @@ public class TransactionCacheOperator extends AbstractCacheOperator {
         this(null, batchSize);
     }
 
-    public TransactionCacheOperator(ObjectMapper mapper) {
-        this(mapper, 32);
+    public TransactionCacheOperator(JsonCodec<?> jsonCodec) {
+        this(jsonCodec, 32);
     }
 
-    public TransactionCacheOperator(ObjectMapper mapper, int batchSize) {
+    public TransactionCacheOperator(JsonCodec<?> jsonCodec, int batchSize) {
         if (batchSize < 1) {
             throw new IllegalArgumentException("`batchSize` cannot be less than 1");
         }
-        this.mapper = mapper != null ?
-                mapper :
-                new ObjectMapper()
-                        .registerModule(new JavaTimeModule())
-                        .registerModule(new ImmutableModule());
+        this.jsonCodec = jsonCodec != null ? jsonCodec : jsonCodec();
         this.batchSize = batchSize;
     }
 
@@ -137,7 +132,7 @@ public class TransactionCacheOperator extends AbstractCacheOperator {
                     statement.execute(sqlClient.getDialect().transCacheOperatorTableDDL());
                 }
                 return null;
-            } catch(SQLException ex) {
+            } catch (SQLException ex) {
                 throw new ExecutionException(
                         "Cannot create table `" +
                                 TransactionCacheOperator.TABLE_NAME +
@@ -183,13 +178,13 @@ public class TransactionCacheOperator extends AbstractCacheOperator {
                     for (Object key : keys) {
                         stmt.setString(1, type != null ? type.toString() : null);
                         stmt.setString(2, prop != null ? prop.toString() : null);
-                        stmt.setString(3, mapper.writeValueAsString(key));
+                        stmt.setString(3, jsonCodec.writer().writeAsString(key));
                         stmt.setString(4, reason);
                         stmt.addBatch();
                     }
                     stmt.executeBatch();
                 }
-            } catch (SQLException | JsonProcessingException ex) {
+            } catch (Exception ex) {
                 throw new ExecutionException("Failed to save delayed cache deletion", ex);
             }
             return null;
@@ -257,12 +252,10 @@ public class TransactionCacheOperator extends AbstractCacheOperator {
                     ImmutableType type = typeFromString(rs.getString(2));
                     ImmutableProp prop = propFromString(rs.getString(3));
                     String json = rs.getString(4);
-                    Object key = mapper.readValue(
-                            json,
-                            type != null ?
-                                    (Class<Object>)type.getIdProp().getElementClass() :
-                                    (Class<Object>)prop.getDeclaringType().getIdProp().getElementClass()
-                    );
+                    Object key = jsonCodec.readerFor(type != null ?
+                                    (Class<Object>) type.getIdProp().getElementClass() :
+                                    (Class<Object>) prop.getDeclaringType().getIdProp().getElementClass())
+                            .read(json);
                     String reason = rs.getString(5);
                     keyMap
                             .computeIfAbsent(new MergedKey(type, prop, reason), it -> new LinkedHashSet<>())

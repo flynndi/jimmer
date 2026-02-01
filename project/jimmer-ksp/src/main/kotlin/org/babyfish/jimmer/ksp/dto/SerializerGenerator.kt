@@ -29,12 +29,13 @@ class SerializerGenerator(
         )
     }
 
-    private fun newSerialize(): FunSpec =
-        FunSpec.builder("serialize")
+    private fun newSerialize(): FunSpec {
+        val serializeFieldMethodName = if (parentGenerator.ctx.jackson3) "defaultSerializeProperty" else "defaultSerializeField"
+        return FunSpec.builder("serialize")
             .addModifiers(KModifier.OVERRIDE)
             .addParameter(
                 "input",
-                    parentGenerator.getDtoClassName()
+                parentGenerator.getDtoClassName()
             )
             .addParameter(
                 "gen",
@@ -53,14 +54,16 @@ class SerializerGenerator(
                             StringUtil.identifier("is", prop.name, "Loaded")
                         )
                         addStatement(
-                            "provider.defaultSerializeField(%S, input.%L, gen)",
+                            "provider.%L(%S, input.%L, gen)",
+                            serializeFieldMethodName,
                             prop.name,
                             prop.name
                         )
                         endControlFlow()
                     } else {
                         addStatement(
-                            "provider.defaultSerializeField(%S, input.%L, gen)",
+                            "provider.%L(%S, input.%L, gen)",
+                            serializeFieldMethodName,
                             prop.name,
                             prop.name
                         )
@@ -69,4 +72,5 @@ class SerializerGenerator(
             }
             .addStatement("gen.writeEndObject()")
             .build()
+    }
 }

@@ -1,6 +1,6 @@
 package org.babyfish.jimmer.sql.meta;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.babyfish.jimmer.jackson.codec.Node;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ModelException;
 import org.babyfish.jimmer.sql.JoinTable;
@@ -9,25 +9,24 @@ import java.util.*;
 import java.util.function.Function;
 
 public class JoinTableFilterInfo {
-
-    private static final Map<Class<?>, Function<JsonNode, Object>> JSON_NODE_VALUE_GETTER_MAP;
-
     private final String columnName;
 
     private final Class<?> type;
 
     private final List<Object> values;
 
-    private final Function<JsonNode, Object> jsonNodeValueGetter;
+    private final Function<Node, Object> jsonNodeValueGetter;
 
     public JoinTableFilterInfo(String columnName, Class<?> type, List<Object> values) {
+        if (!type.isPrimitive() && !String.class.equals(type)) {
+            throw new IllegalArgumentException("type must be primitive or String");
+        }
         this.columnName = columnName;
         this.type = type;
         this.values = values;
-        this.jsonNodeValueGetter = JSON_NODE_VALUE_GETTER_MAP.get(type);
-        if (this.jsonNodeValueGetter == null) {
-            throw new IllegalArgumentException("type must be one of " + JSON_NODE_VALUE_GETTER_MAP.keySet());
-        }
+        this.jsonNodeValueGetter = boolean.class.equals(type) ?
+                JoinTableFilterInfo::castToBoolean :
+                n -> n.castTo(type);
     }
 
     public String getColumnName() {
@@ -204,27 +203,15 @@ public class JoinTableFilterInfo {
         throw new AssertionError("Internal bug: Illegal filtered column type");
     }
 
-    public Object parse(JsonNode node) {
+    public Object parse(Node node) {
         return jsonNodeValueGetter.apply(node);
     }
 
-    static {
-        Map<Class<?>, Function<JsonNode, Object>> map = new HashMap<>();
-        map.put(boolean.class, jsonNode -> {
-            String text = jsonNode.asText();
-            if ("true".equals(text) || "yes".equals(text)) {
-                return true;
-            }
-            return jsonNode.asInt() != 0;
-        });
-        map.put(char.class, JsonNode::asText);
-        map.put(byte.class, jsonNode -> (byte)jsonNode.asInt());
-        map.put(short.class, jsonNode -> (short)jsonNode.asInt());
-        map.put(int.class, JsonNode::asInt);
-        map.put(long.class, JsonNode::asLong);
-        map.put(float.class, jsonNode -> (float)jsonNode.asDouble());
-        map.put(double.class, JsonNode::asDouble);
-        map.put(String.class, JsonNode::asText);
-        JSON_NODE_VALUE_GETTER_MAP = map;
+    private static boolean castToBoolean(Node node) {
+        String text = node.castTo(String.class);
+        if ("true".equals(text) || "yes".equals(text)) {
+            return true;
+        }
+        return node.castTo(int.class) != 0;
     }
 }

@@ -1,10 +1,12 @@
 package org.babyfish.jimmer.sql.binlog;
 
 import org.babyfish.jimmer.sql.JSqlClient;
-import org.babyfish.jimmer.sql.ast.tuple.Tuple2;
 import org.babyfish.jimmer.sql.event.binlog.impl.BinLogParser;
 import org.babyfish.jimmer.sql.event.binlog.impl.MiddleRow;
-import org.babyfish.jimmer.sql.model.*;
+import org.babyfish.jimmer.sql.model.Author;
+import org.babyfish.jimmer.sql.model.AuthorProps;
+import org.babyfish.jimmer.sql.model.BookProps;
+import org.babyfish.jimmer.sql.model.TreeNode;
 import org.babyfish.jimmer.sql.model.inheritance.Role;
 import org.babyfish.jimmer.sql.runtime.JSqlClientImplementor;
 import org.junit.jupiter.api.Assertions;

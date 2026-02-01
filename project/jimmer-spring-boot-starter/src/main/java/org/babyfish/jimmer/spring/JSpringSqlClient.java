@@ -1,6 +1,6 @@
 package org.babyfish.jimmer.spring;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.spring.cfg.JimmerProperties;
 import org.babyfish.jimmer.spring.cfg.support.SpringConnectionManager;
 import org.babyfish.jimmer.spring.cfg.support.SpringLogicalDeletedValueGeneratorProvider;
@@ -83,10 +83,10 @@ class JSpringSqlClient extends JLazyInitializationSqlClient {
         if (isCfgKotlin != isKotlin) {
             throw new IllegalStateException(
                     "Cannot create sql client for \"" +
-                    (isKotlin ? "kotlin" : "java") +
-                    "\" because \"jimmer.language\" in \"application.properties/application.yml\" is \"" +
-                    (isCfgKotlin ? "kotlin" : "java") +
-                    "\""
+                            (isKotlin ? "kotlin" : "java") +
+                            "\" because \"jimmer.language\" in \"application.properties/application.yml\" is \"" +
+                            (isCfgKotlin ? "kotlin" : "java") +
+                            "\""
             );
         }
 
@@ -103,7 +103,7 @@ class JSpringSqlClient extends JLazyInitializationSqlClient {
         DialectDetector dialectDetector = getOptionalBean(DialectDetector.class);
         Executor executor = getOptionalBean(Executor.class);
         SqlFormatter sqlFormatter = getOptionalBean(SqlFormatter.class);
-        ObjectMapper objectMapper = getOptionalBean(ObjectMapper.class);
+        JsonCodec<?> jsonCodec = getOptionalBean(JsonCodec.class);
         CacheFactory cacheFactory = getOptionalBean(CacheFactory.class);
         CacheOperator cacheOperator = getOptionalBean(CacheOperator.class);
         MicroServiceExchange exchange = getOptionalBean(MicroServiceExchange.class);
@@ -195,7 +195,7 @@ class JSpringSqlClient extends JLazyInitializationSqlClient {
         }
         builder
                 .setDatabaseValidationMode(properties.getDatabaseValidation().getMode())
-                .setDefaultSerializedTypeObjectMapper(objectMapper)
+                .setDefaultSerializedTypeJsonCodec(jsonCodec)
                 .setCacheFactory(cacheFactory)
                 .setCacheOperator(cacheOperator)
                 .addCacheAbandonedCallbacks(callbacks);

@@ -8,9 +8,7 @@ import org.babyfish.jimmer.Scalar;
 import org.babyfish.jimmer.impl.util.Classes;
 import org.babyfish.jimmer.jackson.Converter;
 import org.babyfish.jimmer.jackson.JsonConverter;
-import org.babyfish.jimmer.jackson.JacksonUtils;
 import org.babyfish.jimmer.jackson.ConverterMetadata;
-import org.babyfish.jimmer.jackson.v3.ConverterMetadata3;
 import org.babyfish.jimmer.lang.Ref;
 import org.babyfish.jimmer.meta.*;
 import org.babyfish.jimmer.meta.spi.ImmutablePropImplementor;
@@ -85,10 +83,6 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
     private ConverterMetadata converterMetadata;
 
     private boolean converterMetadataResolved;
-
-    private ConverterMetadata3 converterMetadata3;
-
-    private boolean converterMetadataResolved3;
 
     private int storageType; // 1: NONE, 2: COLUMN_DEFINITION, 3: MIDDLE_TABLE
 
@@ -343,7 +337,7 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
             original = original.original;
         }
         this.declaringType = declaringType;
-        this.id = id != null ? id: original.id;
+        this.id = id != null ? id : original.id;
         this.name = original.name;
         this.category = original.category;
         this.elementClass = original.elementClass;
@@ -513,7 +507,7 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
         A[] getterArr = javaGetter.getAnnotationsByType(annotationType);
         A[] propArr = null;
         if (kotlinProp != null) {
-            propArr = (A[])kotlinProp
+            propArr = (A[]) kotlinProp
                     .getAnnotations()
                     .stream()
                     .filter(it -> it.annotationType() == annotationType)
@@ -522,7 +516,7 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
         if (propArr == null || propArr.length == 0) {
             return getterArr;
         }
-        A[] mergedArr = (A[])new Object[propArr.length + getterArr.length];
+        A[] mergedArr = (A[]) new Object[propArr.length + getterArr.length];
         System.arraycopy(propArr, 0, mergedArr, 0, propArr.length);
         System.arraycopy(getterArr, 0, mergedArr, propArr.length, getterArr.length);
         return mergedArr;
@@ -573,16 +567,16 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
             if (mappedBy != null && !isRemote()) {
                 storage = mappedBy.getStorage(strategy);
                 if (storage instanceof MiddleTable) {
-                    return ((MiddleTable)storage).getColumnDefinition().isForeignKey();
+                    return ((MiddleTable) storage).getColumnDefinition().isForeignKey();
                 }
             }
             return false;
         }
         if (storage instanceof MiddleTable) {
-            return ((MiddleTable)storage).getTargetColumnDefinition().isForeignKey();
+            return ((MiddleTable) storage).getTargetColumnDefinition().isForeignKey();
         }
         if (storage instanceof ColumnDefinition) {
-            return ((ColumnDefinition)storage).isForeignKey();
+            return ((ColumnDefinition) storage).isForeignKey();
         }
         return false;
     }
@@ -876,7 +870,7 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
                 metadata = metadata.toListMetadata();
             }
         } else {
-            JsonConverter jsonConverter = JacksonUtils.getAnnotation(this, JsonConverter.class);
+            JsonConverter jsonConverter = AnnotationUtils.getAnnotation(this, JsonConverter.class);
             if (jsonConverter != null) {
                 if (isAssociation(TargetLevel.OBJECT)) {
                     throw new ModelException(
@@ -889,7 +883,7 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
                                     " of immutable object"
                     );
                 }
-                if (JacksonUtils.getAnnotation(this, com.fasterxml.jackson.annotation.JsonFormat.class) != null) {
+                if (AnnotationUtils.getAnnotation(this, com.fasterxml.jackson.annotation.JsonFormat.class) != null) {
                     throw new ModelException(
                             "Illegal property \"" +
                                     this +
@@ -927,72 +921,6 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
         }
         converterMetadata = metadata;
         converterMetadataResolved = true;
-        return metadata;
-    }
-
-    @Override
-    public ConverterMetadata3 getConverterMetadata3() {
-        if (converterMetadataResolved3) {
-            return converterMetadata3;
-        }
-        ConverterMetadata3 metadata = null;
-        if (getIdViewBaseProp() != null) {
-            metadata = getIdViewBaseProp().getTargetType().getIdProp().getConverterMetadata3();
-            if (metadata != null && getIdViewBaseProp().isReferenceList(TargetLevel.ENTITY)) {
-                metadata = metadata.toListMetadata();
-            }
-        } else {
-            JsonConverter jsonConverter = JacksonUtils.getAnnotation(this, JsonConverter.class);
-            if (jsonConverter != null) {
-                if (isAssociation(TargetLevel.OBJECT)) {
-                    throw new ModelException(
-                            "Illegal property \"" +
-                                    this +
-                                    "\", it cannot be decorated by \"@" +
-                                    JsonConverter.class +
-                                    "\" because it is " +
-                                    (isReferenceList(TargetLevel.OBJECT) ? "list" : "reference") +
-                                    " of immutable object"
-                    );
-                }
-                if (JacksonUtils.getAnnotation(this, com.fasterxml.jackson.annotation.JsonFormat.class) != null) {
-                    throw new ModelException(
-                            "Illegal property \"" +
-                                    this +
-                                    "\", it cannot be decorated by both \"@" +
-                                    JsonConverter.class +
-                                    "\" and \"@" +
-                                    com.fasterxml.jackson.annotation.JsonFormat.class +
-                                    "\""
-                    );
-                }
-                metadata = ConverterMetadata3.of(jsonConverter.value());
-                Type genericReturnType = getJavaGetter().getGenericReturnType();
-                if (genericReturnType instanceof Class<?>) {
-                    Class<?> type = (Class<?>) genericReturnType;
-                    if (type.isPrimitive()) {
-                        genericReturnType = Classes.boxTypeOf(type);
-                    }
-                }
-                if (!metadata.getSourceType().equals(genericReturnType)) {
-                    throw new ModelException(
-                            "Illegal property \"" +
-                                    this +
-                                    "\", it cannot be decorated by @" +
-                                    JsonConverter.class.getName() +
-                                    ", the property type \"" +
-                                    javaGetter.getGenericReturnType() +
-                                    "\" does not match the source type \"" +
-                                    metadata.getSourceType() +
-                                    "\" of converter class \"" +
-                                    metadata.getConverter().getClass().getName() +
-                                    "\""
-                    );
-                }
-            }
-        }
-        converterMetadata3 = metadata;
-        converterMetadataResolved3 = true;
         return metadata;
     }
 
@@ -1062,7 +990,7 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
         if (getStorageType() <= 1) {
             return null;
         }
-        return (S)storageCache.get(strategy);
+        return (S) storageCache.get(strategy);
     }
 
     private int getStorageType() {
@@ -1719,7 +1647,7 @@ class ImmutablePropImpl implements ImmutableProp, ImmutablePropImplementor {
                     );
                 }
                 // Deeper check to find dependency cycle
-                ((ImmutablePropImpl)prop).getDependenciesImpl(stack);
+                ((ImmutablePropImpl) prop).getDependenciesImpl(stack);
             }
             props.add(prop);
             declaringType = targetType;

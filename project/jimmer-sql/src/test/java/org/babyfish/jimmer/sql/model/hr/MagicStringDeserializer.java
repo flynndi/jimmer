@@ -14,12 +14,6 @@ public class MagicStringDeserializer extends StdDeserializer<String> {
 
     @Override
     public String deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        String value = p.readValueAs(String.class);
-        StringBuilder builder = new StringBuilder();
-        int size = value.length();
-        for (int i = 0; i < size; i++) {
-            builder.append((char)(value.charAt(i) - 1));
-        }
-        return builder.toString();
+        return MagicStringCodec.deserialize(p.readValueAs(String.class));
     }
 }

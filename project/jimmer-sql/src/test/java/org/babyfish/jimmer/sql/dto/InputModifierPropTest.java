@@ -1,26 +1,27 @@
 package org.babyfish.jimmer.sql.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 import org.babyfish.jimmer.Input;
+import org.babyfish.jimmer.jackson.codec.JsonReader;
 import org.babyfish.jimmer.sql.common.Tests;
 import org.babyfish.jimmer.sql.model.dto.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule;
+
 public class InputModifierPropTest extends Tests {
+    private static final JsonReader<MixedBookInput> MIXED_BOOK_INPUT_READER =
+            jsonCodecWithoutImmutableModule().readerFor(MixedBookInput.class);
 
     @Test
-    public void testAllProperties() throws JsonProcessingException {
+    public void testAllProperties() throws Exception {
         String json = "{" +
                 "\"id\": \"4470bb60-7f23-449b-840c-c511730c93b9\", " +
                 "\"name\": \"SQL in Action\", " +
                 "\"edition\": 2, " +
                 "\"price\": 49.9" +
                 "}";
-        ObjectMapper mapper = new ObjectMapper();
-        MixedBookInput input = mapper.readValue(json, MixedBookInput.class);
+        MixedBookInput input = MIXED_BOOK_INPUT_READER.read(json);
         assertContentEquals(
                 "MixedBookInput(" +
                         "--->id=4470bb60-7f23-449b-840c-c511730c93b9, " +
@@ -42,15 +43,14 @@ public class InputModifierPropTest extends Tests {
     }
 
     @Test
-    public void testNullId() throws JsonProcessingException {
+    public void testNullId() throws Exception {
         String json = "{" +
                 "\"id\": null, " +
                 "\"name\": \"SQL in Action\", " +
                 "\"edition\": 2, " +
                 "\"price\": 49.9" +
                 "}";
-        ObjectMapper mapper = new ObjectMapper();
-        MixedBookInput input = mapper.readValue(json, MixedBookInput.class);
+        MixedBookInput input = MIXED_BOOK_INPUT_READER.read(json);
         assertContentEquals(
                 "MixedBookInput(" +
                         "--->id=null, " +
@@ -71,17 +71,17 @@ public class InputModifierPropTest extends Tests {
     }
 
     @Test
-    public void testMissedId() throws JsonProcessingException {
+    public void testMissedId() {
         String json = "{" +
                 "\"name\": \"SQL in Action\", " +
                 "\"edition\": 2, " +
                 "\"price\": 49.9" +
                 "}";
-        ObjectMapper mapper = new ObjectMapper();
-        ValueInstantiationException ex = Assertions.assertThrows(
-                ValueInstantiationException.class,
-                () -> mapper.readValue(json, MixedBookInput.class)
+        RuntimeException ex = Assertions.assertThrows(
+                RuntimeException.class,
+                () -> MIXED_BOOK_INPUT_READER.read(json)
         );
+        Assertions.assertEquals("ValueInstantiationException", ex.getClass().getSimpleName());
         Assertions.assertEquals(
                 "An object whose type is " +
                         "\"org.babyfish.jimmer.sql.model.dto.MixedBookInput\" " +
@@ -96,15 +96,14 @@ public class InputModifierPropTest extends Tests {
     }
 
     @Test
-    public void testNullName() throws JsonProcessingException {
+    public void testNullName() throws Exception {
         String json = "{" +
                 "\"id\": \"4470bb60-7f23-449b-840c-c511730c93b9\", " +
                 "\"name\": null, " +
                 "\"edition\": 2, " +
                 "\"price\": 49.9" +
                 "}";
-        ObjectMapper mapper = new ObjectMapper();
-        MixedBookInput input = mapper.readValue(json, MixedBookInput.class);
+        MixedBookInput input = MIXED_BOOK_INPUT_READER.read(json);
         assertContentEquals(
                 "MixedBookInput(" +
                         "--->id=4470bb60-7f23-449b-840c-c511730c93b9, " +
@@ -125,14 +124,13 @@ public class InputModifierPropTest extends Tests {
     }
 
     @Test
-    public void testMissedName() throws JsonProcessingException {
+    public void testMissedName() throws Exception {
         String json = "{" +
                 "\"id\": \"4470bb60-7f23-449b-840c-c511730c93b9\", " +
                 "\"edition\": 2, " +
                 "\"price\": 49.9" +
                 "}";
-        ObjectMapper mapper = new ObjectMapper();
-        MixedBookInput input = mapper.readValue(json, MixedBookInput.class);
+        MixedBookInput input = MIXED_BOOK_INPUT_READER.read(json);
         assertContentEquals(
                 "MixedBookInput(" +
                         "--->id=4470bb60-7f23-449b-840c-c511730c93b9, " +
@@ -153,15 +151,14 @@ public class InputModifierPropTest extends Tests {
     }
 
     @Test
-    public void testNullEdition() throws JsonProcessingException {
+    public void testNullEdition() throws Exception {
         String json = "{" +
                 "\"id\": \"4470bb60-7f23-449b-840c-c511730c93b9\", " +
                 "\"name\": \"SQL in Action\", " +
                 "\"edition\": null, " +
                 "\"price\": 49.9" +
                 "}";
-        ObjectMapper mapper = new ObjectMapper();
-        MixedBookInput input = mapper.readValue(json, MixedBookInput.class);
+        MixedBookInput input = MIXED_BOOK_INPUT_READER.read(json);
         assertContentEquals(
                 "MixedBookInput(" +
                         "--->id=4470bb60-7f23-449b-840c-c511730c93b9, " +
@@ -182,14 +179,13 @@ public class InputModifierPropTest extends Tests {
     }
 
     @Test
-    public void testMissedEdition() throws JsonProcessingException {
+    public void testMissedEdition() throws Exception {
         String json = "{" +
                 "\"id\": \"4470bb60-7f23-449b-840c-c511730c93b9\", " +
                 "\"name\": \"SQL in Action\", " +
                 "\"price\": 49.9" +
                 "}";
-        ObjectMapper mapper = new ObjectMapper();
-        MixedBookInput input = mapper.readValue(json, MixedBookInput.class);
+        MixedBookInput input = MIXED_BOOK_INPUT_READER.read(json);
         assertContentEquals(
                 "MixedBookInput(" +
                         "--->id=4470bb60-7f23-449b-840c-c511730c93b9, " +
@@ -209,15 +205,14 @@ public class InputModifierPropTest extends Tests {
     }
 
     @Test
-    public void testNullPrice() throws JsonProcessingException {
+    public void testNullPrice() throws Exception {
         String json = "{" +
                 "\"id\": \"4470bb60-7f23-449b-840c-c511730c93b9\", " +
                 "\"name\": \"SQL in Action\", " +
                 "\"edition\": 2, " +
                 "\"price\": null" +
                 "}";
-        ObjectMapper mapper = new ObjectMapper();
-        MixedBookInput input = mapper.readValue(json, MixedBookInput.class);
+        MixedBookInput input = MIXED_BOOK_INPUT_READER.read(json);
         assertContentEquals(
                 "MixedBookInput(" +
                         "--->id=4470bb60-7f23-449b-840c-c511730c93b9, " +
@@ -237,14 +232,13 @@ public class InputModifierPropTest extends Tests {
     }
 
     @Test
-    public void testMissedPrice() throws JsonProcessingException {
+    public void testMissedPrice() throws Exception {
         String json = "{" +
                 "\"id\": \"4470bb60-7f23-449b-840c-c511730c93b9\", " +
                 "\"name\": \"SQL in Action\", " +
                 "\"edition\": 2" +
                 "}";
-        ObjectMapper mapper = new ObjectMapper();
-        MixedBookInput input = mapper.readValue(json, MixedBookInput.class);
+        MixedBookInput input = MIXED_BOOK_INPUT_READER.read(json);
         assertContentEquals(
                 "MixedBookInput(" +
                         "--->id=4470bb60-7f23-449b-840c-c511730c93b9, " +
@@ -264,7 +258,7 @@ public class InputModifierPropTest extends Tests {
     }
 
     @Test
-    public void testNullableParent() throws JsonProcessingException {
+    public void testNullableParent() throws Exception {
         String nonNullParent = "{\"storeId\": \"4b60e499-5c24-4cd5-a922-3e49bd1d33ac\"}";
         String nullParent = "{\"storeId\": null}";
         String undefinedParent = "{}";
@@ -345,8 +339,8 @@ public class InputModifierPropTest extends Tests {
             Class<T> inputType,
             String dtoJson,
             String entityJson
-    ) throws JsonProcessingException {
-        T input = new ObjectMapper().readValue(json, inputType);
+    ) throws Exception {
+        T input = jsonCodecWithoutImmutableModule().readerFor(inputType).read(json);
         assertContentEquals(dtoJson, input);
         assertContentEquals(entityJson, input.toEntity());
     }

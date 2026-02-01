@@ -6,10 +6,6 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer
 
 class MagicStringSerializer : StdSerializer<String>(String::class.java) {
     override fun serialize(value: String, gen: JsonGenerator, provider: SerializerProvider) {
-        val builder = StringBuilder()
-        for (c in value) {
-            builder.append(c + 1)
-        }
-        gen.writeString(builder.toString())
+        gen.writeString(MagicStringCodec.serialize(value))
     }
 }

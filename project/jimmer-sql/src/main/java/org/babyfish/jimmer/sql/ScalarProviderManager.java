@@ -1,16 +1,8 @@
 package org.babyfish.jimmer.sql;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.ArrayType;
-import com.fasterxml.jackson.databind.type.CollectionType;
-import com.fasterxml.jackson.databind.type.MapType;
-import com.fasterxml.jackson.databind.type.SimpleType;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.kotlin.KotlinModule;
-import org.babyfish.jimmer.impl.util.PropCache;
 import org.babyfish.jimmer.impl.util.ClassCache;
-import org.babyfish.jimmer.jackson.ImmutableModule;
+import org.babyfish.jimmer.impl.util.PropCache;
+import org.babyfish.jimmer.jackson.codec.*;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.meta.ModelException;
@@ -26,13 +18,12 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Function;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 import static org.babyfish.jimmer.sql.ScalarProviderUtils.getSqlType;
 
 class ScalarProviderManager implements ScalarTypeStrategy {
 
     private static final Set<Class<?>> GENERIC_TYPES;
-
-    private static final ObjectMapper DEFAULT_OBJECT_MAPPER;
 
     private final ClassCache<ScalarProvider<?, ?>> typeScalarProviderCache =
             new ClassCache<>(this::createProvider, true);
@@ -46,9 +37,9 @@ class ScalarProviderManager implements ScalarTypeStrategy {
 
     private final PropScalarProviderFactory propScalarProviderFactory;
 
-    private final Map<Class<?>, ObjectMapper> serializedTypeObjectMapperMap;
+    private final Map<Class<?>, JsonCodec> serializedTypeJsonCodecMap;
 
-    private final Map<ImmutableProp, ObjectMapper> serializedPropObjectMapperMap;
+    private final Map<ImmutableProp, JsonCodec> serializedPropJsonCodecMap;
 
     private final Function<ImmutableProp, ScalarProvider<?, ?>> defaultJsonProviderCreator;
 
@@ -60,8 +51,8 @@ class ScalarProviderManager implements ScalarTypeStrategy {
             Map<Class<?>, ScalarProvider<?, ?>> customizedTypeScalarProviderMap,
             Map<ImmutableProp, ScalarProvider<?, ?>> customizedPropScalarProviderMap,
             PropScalarProviderFactory propScalarProviderFactory,
-            Map<Class<?>, ObjectMapper> serializedTypeObjectMapperMap,
-            Map<ImmutableProp, ObjectMapper> serializedPropObjectMapperMap,
+            Map<Class<?>, JsonCodec<?>> serializedTypeJsonCodecMap,
+            Map<ImmutableProp, JsonCodec<?>> serializedPropJsonCodecMap,
             Function<ImmutableProp, ScalarProvider<?, ?>> defaultJsonProviderCreator,
             EnumType.Strategy defaultEnumStrategy,
             Dialect dialect
@@ -69,8 +60,8 @@ class ScalarProviderManager implements ScalarTypeStrategy {
         this.customizedTypeScalarProviderMap = new HashMap<>(customizedTypeScalarProviderMap);
         this.customizedPropScalarProviderMap = new HashMap<>(customizedPropScalarProviderMap);
         this.propScalarProviderFactory = propScalarProviderFactory;
-        this.serializedTypeObjectMapperMap = new HashMap<>(serializedTypeObjectMapperMap);
-        this.serializedPropObjectMapperMap = new HashMap<>(serializedPropObjectMapperMap);
+        this.serializedTypeJsonCodecMap = new HashMap<>(serializedTypeJsonCodecMap);
+        this.serializedPropJsonCodecMap = new HashMap<>(serializedPropJsonCodecMap);
         this.defaultJsonProviderCreator = defaultJsonProviderCreator;
         this.defaultEnumStrategy = defaultEnumStrategy;
         this.dialect = dialect;
@@ -130,11 +121,9 @@ class ScalarProviderManager implements ScalarTypeStrategy {
         if (defaultJsonProviderCreator != null) {
             return defaultJsonProviderCreator.apply(prop);
         }
-        return createJsonProvider(
-                prop.getReturnClass(), 
-                jacksonType(prop.getGenericType()),
-                serializedPropObjectMapper(prop)
-        );
+        JsonCodec<?> serializedPropJsonCodec = serializedPropJsonCodec(prop);
+        JsonCodec<?> jsonCodec = serializedPropJsonCodec != null ? serializedPropJsonCodec : jsonCodec();
+        return createJsonProvider(prop.getReturnClass(), tf -> jacksonType(tf, prop.getGenericType()), jsonCodec);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -161,30 +150,28 @@ class ScalarProviderManager implements ScalarTypeStrategy {
         }
         if (enumType != null && !type.isEnum()) {
             throw new ModelException(
-                "Illegal type \"" +
-                    type +
-                    "\", it cannot be decorated by @EnumType because it is not enum"
+                    "Illegal type \"" +
+                            type +
+                            "\", it cannot be decorated by @EnumType because it is not enum"
             );
         }
         if (enumType != null && enumType.value() == EnumType.Strategy.ORDINAL) {
-            return newEnumByIntProvider((Class<Enum>)type);
+            return newEnumByIntProvider((Class<Enum>) type);
         }
         if (enumType != null && enumType.value() == EnumType.Strategy.NAME) {
-            return newEnumByStringProvider((Class<Enum>)type);
+            return newEnumByStringProvider((Class<Enum>) type);
         }
         if (type.isEnum()) {
             if (defaultEnumStrategy == EnumType.Strategy.ORDINAL) {
-                return newEnumByIntProvider((Class<Enum>)type);
+                return newEnumByIntProvider((Class<Enum>) type);
             }
-            return newEnumByStringProvider((Class<Enum>)type);
+            return newEnumByStringProvider((Class<Enum>) type);
         }
 
         if (serialized != null) {
-            return createJsonProvider(
-                    type,
-                    SimpleType.constructUnsafe(type),
-                    serializedTypeObjectMapper(type)
-            );
+            JsonCodec<?> serializedTypeJsonCodec = serializedTypeJsonCodec(type);
+            JsonCodec<?> jsonCodec = serializedTypeJsonCodec != null ? serializedTypeJsonCodec : jsonCodec();
+            return createJsonProvider(type, tf -> tf.constructType(type), jsonCodec);
         }
 
         return null;
@@ -192,7 +179,7 @@ class ScalarProviderManager implements ScalarTypeStrategy {
 
     private <E extends Enum<E>> ScalarProvider<E, ?> newEnumByStringProvider(Class<E> enumType) {
         return ScalarProvider.enumProviderByString(enumType, it -> {
-            for (E enumValue: enumType.getEnumConstants()) {
+            for (E enumValue : enumType.getEnumConstants()) {
                 Field enumField;
                 try {
                     enumField = enumType.getField(enumValue.name());
@@ -205,12 +192,12 @@ class ScalarProviderManager implements ScalarTypeStrategy {
                 }
                 if (enumItem.ordinal() != -892374651) {
                     throw new ModelException(
-                        "Illegal enum type \"" +
-                            enumType.getName() +
-                            "\", it is mapped by name, not ordinal, " +
-                            "but ordinal of the @EnumItem of \"" +
-                            enumField.getName() +
-                            "\" is configured"
+                            "Illegal enum type \"" +
+                                    enumType.getName() +
+                                    "\", it is mapped by name, not ordinal, " +
+                                    "but ordinal of the @EnumItem of \"" +
+                                    enumField.getName() +
+                                    "\" is configured"
                     );
                 }
                 if (!enumItem.name().isEmpty()) {
@@ -222,7 +209,7 @@ class ScalarProviderManager implements ScalarTypeStrategy {
 
     private <E extends Enum<E>> ScalarProvider<?, ?> newEnumByIntProvider(Class<E> enumType) {
         return ScalarProvider.enumProviderByInt(enumType, it -> {
-            for (E enumValue: enumType.getEnumConstants()) {
+            for (E enumValue : enumType.getEnumConstants()) {
                 Field enumField;
                 try {
                     enumField = enumType.getField(enumValue.name());
@@ -235,12 +222,12 @@ class ScalarProviderManager implements ScalarTypeStrategy {
                 }
                 if (!enumItem.name().isEmpty()) {
                     throw new ModelException(
-                        "Illegal enum type \"" +
-                            enumType.getName() +
-                            "\", it is mapped by ordinal, not name, " +
-                            "but name of the @EnumItem of \"" +
-                            enumField.getName() +
-                            "\" is configured"
+                            "Illegal enum type \"" +
+                                    enumType.getName() +
+                                    "\", it is mapped by ordinal, not name, " +
+                                    "but name of the @EnumItem of \"" +
+                                    enumField.getName() +
+                                    "\" is configured"
                     );
                 }
                 if (enumItem.ordinal() != -892374651) {
@@ -251,22 +238,22 @@ class ScalarProviderManager implements ScalarTypeStrategy {
     }
 
     @SuppressWarnings("unchecked")
-    private ScalarProvider<?, String> createJsonProvider(Class<?> type, JavaType javaType, ObjectMapper objectMapper) {
+    private ScalarProvider<?, String> createJsonProvider(Class<?> type, TypeCreator typeCreator, JsonCodec<?> jsonCodec) {
         return new AbstractScalarProvider<Object, String>(
                 (Class<Object>) type,
                 String.class
         ) {
-
-            private final ObjectMapper mapper = objectMapper != null ? objectMapper : DEFAULT_OBJECT_MAPPER;
+            final JsonReader<?> reader = jsonCodec.readerFor(typeCreator);
+            final JsonWriter writer = jsonCodec.writer();
 
             @Override
             public @NotNull Object toScalar(@NotNull String sqlValue) throws Exception {
-                return mapper.readValue(sqlValue, javaType);
+                return reader.read(sqlValue);
             }
 
             @Override
             public @NotNull String toSql(@NotNull Object scalarValue) throws Exception {
-                return mapper.writeValueAsString(scalarValue);
+                return writer.writeAsString(scalarValue);
             }
 
             @Override
@@ -307,59 +294,60 @@ class ScalarProviderManager implements ScalarTypeStrategy {
         return provider;
     }
 
-    private ObjectMapper serializedTypeObjectMapper(Class<?> type) {
-        ObjectMapper mapper = serializedTypeObjectMapperMap.get(type);
-        if (mapper != null) {
-            return mapper;
+    private JsonCodec<?> serializedTypeJsonCodec(Class<?> type) {
+        JsonCodec<?> jsonCodec = serializedTypeJsonCodecMap.get(type);
+        if (jsonCodec != null) {
+            return jsonCodec;
         }
         Class<?> superType = type.isInterface() ? Object.class : type.getSuperclass();
         if (superType != null) {
-            mapper = serializedTypeObjectMapper(superType);
+            jsonCodec = serializedTypeJsonCodec(superType);
         }
         for (Class<?> superItfType : type.getInterfaces()) {
-            ObjectMapper superMapper = serializedTypeObjectMapper(superItfType);
-            if (superMapper == null) {
+            JsonCodec<?> superJsonCodec = serializedTypeJsonCodec(superItfType);
+            if (superJsonCodec == null) {
                 continue;
             }
-            if (mapper != null && mapper != superMapper) {
+            if (jsonCodec != null && jsonCodec != superJsonCodec) {
                 throw new ModelException(
-                        "Cannot get the serialized object mapper of \"" +
+                        "Cannot get the serialized json codec of \"" +
                                 type.getName() +
                                 "\", because there are conflict configurations in super types"
                 );
             }
-            mapper = superMapper;
+            jsonCodec = superJsonCodec;
         }
-        return mapper;
+        return jsonCodec;
     }
 
-    private ObjectMapper serializedPropObjectMapper(ImmutableProp prop) {
-        ObjectMapper mapper = serializedPropObjectMapperMap.get(prop);
-        if (mapper != null) {
-            return mapper;
+    private JsonCodec<?> serializedPropJsonCodec(ImmutableProp prop) {
+        JsonCodec<?> jsonCodec = serializedPropJsonCodecMap.get(prop);
+        if (jsonCodec != null) {
+            return jsonCodec;
         }
         for (ImmutableType superType : prop.getDeclaringType().getSuperTypes()) {
             ImmutableProp superProp = superType.getProps().get(prop.getName());
             if (superProp == null) {
                 continue;
             }
-            ObjectMapper superMapper = serializedPropObjectMapper(superProp);
-            if (superMapper == null) {
+            JsonCodec<?> superJsonCodec = serializedPropJsonCodec(superProp);
+            if (superJsonCodec == null) {
                 continue;
             }
-            if (mapper != null && mapper != superMapper) {
+            if (jsonCodec != null && jsonCodec != superJsonCodec) {
                 throw new ModelException(
-                        "Cannot get the serialized object mapper of \"" +
+                        "Cannot get the serialized json codec of \"" +
                                 prop +
                                 "\", because there are conflict configurations in super properties"
                 );
             }
-            mapper = superMapper;
+            jsonCodec = superJsonCodec;
         }
-        return serializedTypeObjectMapper(prop.getReturnClass());
+        return serializedTypeJsonCodec(prop.getReturnClass());
     }
 
-    private static JavaType jacksonType(Type type) {
+    @SuppressWarnings("unchecked")
+    private static <JT extends Type> JT jacksonType(JsonTypeFactory<JT> typeFactory, Type type) {
         if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
             Type rawType = parameterizedType.getRawType();
@@ -370,21 +358,14 @@ class ScalarProviderManager implements ScalarTypeStrategy {
             }
             Class<?> rawClass = (Class<?>) rawType;
             if (Map.class.isAssignableFrom(rawClass)) {
-                return MapType.construct(
-                        rawClass,
-                        null,
-                        null,
-                        null,
-                        jacksonType(parameterizedType.getActualTypeArguments()[0]),
-                        jacksonType(parameterizedType.getActualTypeArguments()[1])
-                );
+                return typeFactory.constructMapType(
+                        Map.class,
+                        jacksonType(typeFactory, parameterizedType.getActualTypeArguments()[0]),
+                        jacksonType(typeFactory, parameterizedType.getActualTypeArguments()[1]));
             }
-            return CollectionType.construct(
-                    rawClass,
-                    null,
-                    null,
-                    null,
-                    jacksonType(parameterizedType.getActualTypeArguments()[0])
+            return typeFactory.constructCollectionType(
+                    (Class<? extends Collection<?>>) rawClass,
+                    jacksonType(typeFactory, parameterizedType.getActualTypeArguments()[0])
             );
         } else if (type instanceof Class<?>) {
             if (GENERIC_TYPES.contains(type)) {
@@ -396,30 +377,18 @@ class ScalarProviderManager implements ScalarTypeStrategy {
             }
             Class<?> clazz = (Class<?>) type;
             if (clazz.isArray()) {
-                return ArrayType.construct(
-                        jacksonType(clazz.getComponentType()),
-                        null,
-                        null,
-                        null
-                );
+                return typeFactory.constructArrayType(jacksonType(typeFactory, clazz.getComponentType()));
             }
-            return SimpleType.constructUnsafe(clazz);
+            return typeFactory.constructType(clazz);
         } else if (type instanceof WildcardType) {
             WildcardType wildcardType = (WildcardType) type;
-            return jacksonType(wildcardType.getLowerBounds()[0]);
-        } else if (type instanceof TypeVariable<?>){
+            return jacksonType(typeFactory, wildcardType.getLowerBounds()[0]);
+        } else if (type instanceof TypeVariable<?>) {
             throw new IllegalArgumentException("type variable is not allowed");
         } else if (type instanceof GenericArrayType) {
             throw new IllegalArgumentException("generic array is not allowed");
         } else {
             throw new IllegalArgumentException("Unexpected type: " + type.getClass().getName());
-        }
-    }
-
-    // `KotlinModule` may cause ClassNotFoundException, put it into this separated class
-    private static class KotlinModuleRegister {
-        public static ObjectMapper register(ObjectMapper mapper) {
-            return mapper.registerModule(new KotlinModule.Builder().build());
         }
     }
 
@@ -435,20 +404,5 @@ class ScalarProviderManager implements ScalarTypeStrategy {
         genericTypes.add(SortedMap.class);
         genericTypes.add(NavigableMap.class);
         GENERIC_TYPES = genericTypes;
-
-        ObjectMapper mapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule())
-                .registerModule(new ImmutableModule());
-        boolean hasKotlinModule;
-        try {
-            Class.forName("com.fasterxml.jackson.module.kotlin.KotlinModule");
-            hasKotlinModule = true;
-        } catch (ClassNotFoundException ex) {
-            hasKotlinModule = false;
-        }
-        if (hasKotlinModule) {
-            mapper = KotlinModuleRegister.register(mapper);
-        }
-        DEFAULT_OBJECT_MAPPER = mapper;
     }
 }

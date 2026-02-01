@@ -1,10 +1,10 @@
 package org.babyfish.jimmer.sql.event.binlog;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.babyfish.jimmer.jackson.codec.Node;
 
 public interface BinLog {
 
-    void accept(String tableName, JsonNode oldData, JsonNode newData);
+    void accept(String tableName, Node oldData, Node newData);
 
-    void accept(String tableName, JsonNode oldData, JsonNode newData, String reason);
+    void accept(String tableName, Node oldData, Node newData, String reason);
 }

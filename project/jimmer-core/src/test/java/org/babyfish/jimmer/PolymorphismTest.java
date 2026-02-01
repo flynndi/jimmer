@@ -1,7 +1,9 @@
 package org.babyfish.jimmer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.babyfish.jimmer.model.*;
+import org.babyfish.jimmer.model.Immutables;
+import org.babyfish.jimmer.model.ManualComment;
+import org.babyfish.jimmer.model.RobotComment;
+import org.babyfish.jimmer.model.Topic;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +12,7 @@ import java.util.Arrays;
 public class PolymorphismTest {
 
     @Test
-    public void test() throws JsonProcessingException {
+    public void test() {
         Topic topic = Immutables.createTopic(draft -> {
             draft.setName("I love GraphQL");
             draft.setPinnedComment(

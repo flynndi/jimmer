@@ -1,9 +1,7 @@
 package org.babyfish.jimmer.spring.cloud;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.babyfish.jimmer.impl.util.Classes;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.runtime.ImmutableSpi;
 import org.babyfish.jimmer.sql.ast.tuple.Tuple2;
@@ -18,19 +16,20 @@ public class SpringCloudExchange implements MicroServiceExchange {
 
     private final RestTemplate restTemplate;
 
-    private final ObjectMapper mapper;
+    private final JsonCodec<?> jsonCodec;
 
-    public SpringCloudExchange(RestTemplate restTemplate, ObjectMapper mapper) {
+    public SpringCloudExchange(RestTemplate restTemplate, JsonCodec<?> jsonCodec) {
         this.restTemplate = restTemplate;
-        this.mapper = mapper;
+        this.jsonCodec = jsonCodec;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<ImmutableSpi> findByIds(
             String microServiceName,
             Collection<?> ids,
             Fetcher<?> fetcher
-    ) throws JsonProcessingException {
+    ) throws Exception {
         String json = restTemplate.getForObject(
                 "http://" +
                         microServiceName +
@@ -41,16 +40,13 @@ public class SpringCloudExchange implements MicroServiceExchange {
                         MicroServiceExporterController.FETCHER +
                         "={fetcher}",
                 String.class,
-                mapper.writeValueAsString(ids),
+                jsonCodec.writer().writeAsString(ids),
                 fetcher.toString()
         );
-        return mapper.readValue(
-                json,
-                mapper.getTypeFactory().constructParametricType(
-                        List.class,
-                        fetcher.getImmutableType().getJavaClass()
-                )
-        );
+
+        return (List<ImmutableSpi>) jsonCodec
+                .readerFor(tf -> tf.constructListType(fetcher.getImmutableType().getJavaClass()))
+                .read(json);
     }
 
     @Override
@@ -59,7 +55,7 @@ public class SpringCloudExchange implements MicroServiceExchange {
             ImmutableProp prop,
             Collection<?> targetIds,
             Fetcher<?> fetcher
-    ) throws JsonProcessingException {
+    ) throws Exception {
         String json = restTemplate.getForObject(
                 "http://" +
                         microServiceName +
@@ -73,20 +69,17 @@ public class SpringCloudExchange implements MicroServiceExchange {
                         "={fetcher}",
                 String.class,
                 prop.getName(),
-                mapper.writeValueAsString(targetIds),
+                jsonCodec.writer().writeAsString(targetIds),
                 fetcher.toString()
         );
-        TypeFactory typeFactory = mapper.getTypeFactory();
-        return mapper.readValue(
-                json,
-                typeFactory.constructParametricType(
+
+        return jsonCodec
+                .<List<Tuple2<Object, ImmutableSpi>>>readerFor(tf -> tf.constructCollectionType(
                         List.class,
-                        typeFactory.constructParametricType(
+                        tf.constructParametricType(
                                 Tuple2.class,
                                 Classes.boxTypeOf(prop.getTargetType().getIdProp().getElementClass()),
-                                fetcher.getImmutableType().getJavaClass()
-                        )
-                )
-        );
+                                fetcher.getImmutableType().getJavaClass())))
+                .read(json);
     }
 }

@@ -1,6 +1,5 @@
 package org.babyfish.jimmer.sql.cache;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.JSqlClient;
@@ -8,20 +7,14 @@ import org.babyfish.jimmer.sql.common.AbstractQueryTest;
 import org.babyfish.jimmer.sql.common.CacheImpl;
 import org.babyfish.jimmer.sql.common.ParameterizedCaches;
 import org.babyfish.jimmer.sql.filter.common.CacheableFileFilter;
-import org.babyfish.jimmer.sql.runtime.ConnectionManager;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
 
 public class CalculationEvictTest extends AbstractQueryTest {
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
     private JSqlClient sqlClient;
 
     private List<String> deleteMessages;

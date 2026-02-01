@@ -1,7 +1,5 @@
 package org.babyfish.jimmer.sql.cache;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.JSqlClient;
@@ -18,9 +16,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class OrganizationEvictTest extends AbstractQueryTest {
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+public class OrganizationEvictTest extends AbstractQueryTest {
 
     private JSqlClient sqlClient;
 
@@ -72,15 +70,16 @@ public class OrganizationEvictTest extends AbstractQueryTest {
                     try {
                         sqlClient.getBinLog().accept(
                                 "organization",
-                                MAPPER.readTree("{\"id\":9, \"parent_id\":2}"),
-                                MAPPER.readTree("{\"id\":9, \"parent_id\":3}")
+                                jsonCodec().treeReader().read("{\"id\":9, \"parent_id\":2}"),
+                                jsonCodec().treeReader().read("{\"id\":9, \"parent_id\":3}")
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;
                 },
-                ctx -> {}
+                ctx -> {
+                }
         );
         Assertions.assertEquals(
                 "[Organization.parent-9, Organization.childOrganizations-2, Organization.childOrganizations-3]",
@@ -95,10 +94,10 @@ public class OrganizationEvictTest extends AbstractQueryTest {
                     try {
                         sqlClient.getBinLog().accept(
                                 "organization",
-                                MAPPER.readTree("{\"tenant\":\"a\"}"),
-                                MAPPER.readTree("{\"id\":9, \"tenant\": \"b\", \"parent_id\":2}")
+                                jsonCodec().treeReader().read("{\"tenant\":\"a\"}"),
+                                jsonCodec().treeReader().read("{\"id\":9, \"tenant\": \"b\", \"parent_id\":2}")
                         );
-                    } catch (JsonProcessingException ex) {
+                    } catch (Exception ex) {
                         Assertions.fail(ex);
                     }
                     return null;

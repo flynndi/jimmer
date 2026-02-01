@@ -1,6 +1,5 @@
 package org.babyfish.jimmer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.babyfish.jimmer.model.LongData;
 import org.babyfish.jimmer.model.LongDataDraft;
 import org.junit.jupiter.api.Assertions;
@@ -11,7 +10,7 @@ import java.util.Arrays;
 public class LongDataTest {
 
     @Test
-    public void test() throws JsonProcessingException {
+    public void test() {
         LongData data = LongDataDraft.$.produce(draft -> {
             draft.setNotNullValue(1L);
             draft.setNullableValue(2L);

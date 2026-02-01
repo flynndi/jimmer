@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import org.babyfish.jimmer.jackson.v2.NodeV2;
 import org.babyfish.jimmer.meta.EmbeddedLevel;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
@@ -13,15 +14,17 @@ import org.babyfish.jimmer.sql.ast.impl.mutation.EmbeddableObjects;
 import org.babyfish.jimmer.sql.meta.MetadataStrategy;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-class BinLogDeserializer extends StdDeserializer<Object> {
+class BinLogDeserializerV2 extends StdDeserializer<Object> {
 
     private final BinLogParser parser;
 
     private final ImmutableType immutableType;
 
-    public BinLogDeserializer(
+    public BinLogDeserializerV2(
             BinLogParser parser,
             ImmutableType immutableType
     ) {
@@ -44,7 +47,7 @@ class BinLogDeserializer extends StdDeserializer<Object> {
                 String columnName = fieldEntry.getKey();
                 JsonNode childNode = fieldEntry.getValue();
                 List<ImmutableProp> chain = immutableType.getPropChain(columnName, strategy);
-                ValueParser.addEntityProp((DraftSpi) draft, chain, childNode, parser);
+                ValueParser.addEntityProp((DraftSpi) draft, chain, new NodeV2(childNode), parser);
             }
             for (ImmutableProp prop : immutableType.getProps().values()) {
                 if (prop.isMutable() && prop.isEmbedded(EmbeddedLevel.BOTH)) {

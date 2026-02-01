@@ -1,10 +1,6 @@
 package org.babyfish.jimmer.sql.meta.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.babyfish.jimmer.jackson.ImmutableModule;
-import org.babyfish.jimmer.jackson.JacksonUtils;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 
 import java.lang.reflect.Type;
 import java.text.ParseException;
@@ -18,6 +14,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
+
 public class MetadataLiterals {
 
     private final static DateTimeFormatter ZONED_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[XXX][X]")
@@ -29,13 +27,12 @@ public class MetadataLiterals {
 
     private final static DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .registerModule(new ImmutableModule());
+    private static final JsonCodec<?> JSON_CODEC = jsonCodec();
 
     private static final Map<Class<?>, Function<String, Object>> DEFAULT_VALUE_PARSER_MAP;
 
-    private MetadataLiterals() {}
+    private MetadataLiterals() {
+    }
 
     public static Object valueOf(Type type, boolean nullable, String value) {
         if ("null".equals(value)) {
@@ -60,8 +57,8 @@ public class MetadataLiterals {
             }
         }
         try {
-            return OBJECT_MAPPER.readValue(value, JacksonUtils.getJacksonType(type));
-        } catch (JsonProcessingException ex) {
+            return JSON_CODEC.readerFor(tf -> tf.constructType(type)).read(value);
+        } catch (Exception ex) {
             throw new IllegalArgumentException(
                     "The value \"" +
                             value +

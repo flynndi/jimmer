@@ -1,19 +1,15 @@
 package org.babyfish.jimmer.sql.json;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.babyfish.jimmer.jackson.ImmutableModule;
 import org.babyfish.jimmer.sql.model.Book;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
+
 public class ViewJacksonTest {
 
-    private static final ObjectMapper MAPPER =
-            new ObjectMapper().registerModule(new ImmutableModule());
-
     @Test
-    public void assertRaw() throws JsonProcessingException {
+    public void assertRaw() throws Exception {
         String json = "{" +
                 "\"store\":{\"id\":\"916e4629-f18f-49cf-9c0a-c161383d3939\"}," +
                 "\"authors\":[" +
@@ -21,7 +17,7 @@ public class ViewJacksonTest {
                 "{\"id\":\"1639d9d5-7b92-43cf-a03f-25314832f794\"}" +
                 "]" +
                 "}";
-        Book book2 = MAPPER.readValue(json, Book.class);
+        Book book2 = jsonCodec().readerFor(Book.class).read(json);
         Assertions.assertEquals(
                 json,
                 book2.toString()
@@ -29,7 +25,7 @@ public class ViewJacksonTest {
     }
 
     @Test
-    public void assertView() throws JsonProcessingException {
+    public void assertView() throws Exception {
         String json = "{" +
                 "\"storeId\":\"916e4629-f18f-49cf-9c0a-c161383d3939\"," +
                 "\"authorIds\":[" +
@@ -37,7 +33,7 @@ public class ViewJacksonTest {
                 "\"1639d9d5-7b92-43cf-a03f-25314832f794\"" +
                 "]" +
                 "}";
-        Book book = MAPPER.readValue(json, Book.class);
+        Book book = jsonCodec().readerFor(Book.class).read(json);
         Assertions.assertEquals(
                 json,
                 book.toString()

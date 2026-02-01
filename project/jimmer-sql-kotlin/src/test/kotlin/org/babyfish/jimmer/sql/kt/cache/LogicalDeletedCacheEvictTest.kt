@@ -1,8 +1,6 @@
 package org.babyfish.jimmer.sql.kt.cache
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import org.babyfish.jimmer.jackson.ImmutableModule
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec
 import org.babyfish.jimmer.meta.ImmutableProp
 import org.babyfish.jimmer.meta.ImmutableType
 import org.babyfish.jimmer.sql.cache.Cache
@@ -52,11 +50,11 @@ class LogicalDeletedCacheEvictTest : AbstractQueryTest() {
     private fun onPropCacheDelete(prop: ImmutableProp, keys: Collection<*>) {
         messages.add(
             "delete " +
-                prop.declaringType.javaClass.simpleName +
-                "." +
-                prop.name +
-                "-" +
-                keys
+                    prop.declaringType.javaClass.simpleName +
+                    "." +
+                    prop.name +
+                    "-" +
+                    keys
         )
     }
 
@@ -65,8 +63,8 @@ class LogicalDeletedCacheEvictTest : AbstractQueryTest() {
         connectAndExpect({
             _sqlClient.binLog.accept(
                 "administrator",
-                MAPPER.readTree("""{"id": 1, "deleted": false}"""),
-                MAPPER.readTree("""{"id": 1, "deleted": true}""")
+                jsonCodec().treeReader().read("""{"id": 1, "deleted": false}"""),
+                jsonCodec().treeReader().read("""{"id": 1, "deleted": true}""")
             )
         }) {
             sql(
@@ -95,8 +93,8 @@ class LogicalDeletedCacheEvictTest : AbstractQueryTest() {
         connectAndExpect({
             _sqlClient.binLog.accept(
                 "role",
-                MAPPER.readTree("""{"id": 100, "deleted": false}"""),
-                MAPPER.readTree("""{"id": 100, "deleted": true}""")
+                jsonCodec().treeReader().read("""{"id": 100, "deleted": false}"""),
+                jsonCodec().treeReader().read("""{"id": 100, "deleted": true}""")
             )
         }) {
             sql(
@@ -127,8 +125,8 @@ class LogicalDeletedCacheEvictTest : AbstractQueryTest() {
         connectAndExpect({
             _sqlClient.binLog.accept(
                 "permission",
-                MAPPER.readTree("""{"id":1000, "deleted":false, "role_id": 100}"""),
-                MAPPER.readTree("""{"id": 1000, "deleted": true}""")
+                jsonCodec().treeReader().read("""{"id":1000, "deleted":false, "role_id": 100}"""),
+                jsonCodec().treeReader().read("""{"id": 1000, "deleted": true}""")
             )
         }) {
         }
@@ -152,8 +150,8 @@ class LogicalDeletedCacheEvictTest : AbstractQueryTest() {
         connectAndExpect({
             _sqlClient.binLog.accept(
                 "permission",
-                MAPPER.readTree("""{"id":1000, "deleted":false, "role_id": 100}"""),
-                MAPPER.readTree("""{"id":1000, "deleted":false, "role_id": 200}""")
+                jsonCodec().treeReader().read("""{"id":1000, "deleted":false, "role_id": 100}"""),
+                jsonCodec().treeReader().read("""{"id":1000, "deleted":false, "role_id": 200}""")
             )
         }) {
         }
@@ -168,11 +166,5 @@ class LogicalDeletedCacheEvictTest : AbstractQueryTest() {
         ) {
             messages
         }
-    }
-
-    companion object {
-        private val MAPPER = ObjectMapper()
-            .registerModule(JavaTimeModule())
-            .registerModule(ImmutableModule())
     }
 }

@@ -11,10 +11,10 @@ dependencies {
     implementation(libs.slf4j.api)
     implementation(libs.kotlin.stdlib)
     implementation(libs.jetbrains.annotations)
-    implementation(libs.jackson.datatype.jsr310)
+    compileOnly(libs.jackson2.databind)
+    compileOnly(libs.jackson3.databind)
     compileOnly(libs.h2)
     compileOnly(libs.postgresql)
-    compileOnly(libs.jackson.module.kotlin)
     compileOnly(libs.caffeine)
     compileOnly(libs.spring.data.redis)
     compileOnly(libs.quarkus.redis.client)
@@ -26,13 +26,13 @@ dependencies {
         exclude("com.ibm.icu", "icu4j")
     }
 
-    testImplementation(libs.lombok)
+    testCompileOnly(libs.lombok)
     testAnnotationProcessor(libs.lombok)
+    testAnnotationProcessor(libs.bundles.jackson)
     testAnnotationProcessor(projects.jimmerApt)
 
+    testImplementation(libs.bundles.jackson)
     testImplementation(libs.spring.jdbc)
-    testImplementation(libs.jackson.databind)
-
     testImplementation(libs.h2)
     testImplementation(libs.mysql.connector.java)
     testImplementation(libs.postgresql)
@@ -61,4 +61,5 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("2000")
     options.compilerArgs.add("-Ajimmer.dto.hibernateValidatorEnhancement=true")
     options.compilerArgs.add("-Ajimmer.dto.fieldVisibility=protected")
+    options.compilerArgs.add("-Ajimmer.jackson3=true")
 }

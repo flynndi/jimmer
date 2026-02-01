@@ -1,33 +1,19 @@
 package org.babyfish.jimmer.sql.cache.redisson;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import com.fasterxml.jackson.databind.type.CollectionType;
-import com.fasterxml.jackson.databind.type.SimpleType;
 import org.babyfish.jimmer.meta.ImmutableProp;
 import org.babyfish.jimmer.meta.ImmutableType;
 import org.babyfish.jimmer.sql.cache.CacheTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
-@JsonSerialize(using = InvalidateMessage.Serializer.class)
-@JsonDeserialize(using = InvalidateMessage.Deserializer.class)
+@tools.jackson.databind.annotation.JsonSerialize(using = InvalidateMessageSerializer3.class)
+@tools.jackson.databind.annotation.JsonDeserialize(using = InvalidateMessageDeserializer3.class)
+@com.fasterxml.jackson.databind.annotation.JsonSerialize(using = InvalidateMessageSerializer.class)
+@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = InvalidateMessageDeserializer.class)
 class InvalidateMessage implements Serializable {
 
     @NotNull
@@ -92,57 +78,5 @@ class InvalidateMessage implements Serializable {
             return new CacheTracker.InvalidateEvent(prop, ids);
         }
         return new CacheTracker.InvalidateEvent(getType(), ids);
-    }
-
-    static class Serializer extends StdSerializer<InvalidateMessage> {
-
-        Serializer() {
-            super(InvalidateMessage.class);
-        }
-
-        @Override
-        public void serialize(
-                InvalidateMessage value,
-                JsonGenerator gen,
-                SerializerProvider provider
-        ) throws IOException {
-            gen.writeStartObject();
-            gen.writeStringField("trackerId", value.trackerId.toString());
-            gen.writeStringField("typeName", value.typeName);
-            gen.writeStringField("propName", value.propName);
-            gen.writeObjectField("ids", value.ids);
-            gen.writeEndObject();
-        }
-    }
-
-    static class Deserializer extends StdDeserializer<InvalidateMessage> {
-
-        protected Deserializer() {
-            super(InvalidateMessage.class);
-        }
-
-        @Override
-        public InvalidateMessage deserialize(
-                JsonParser jp,
-                DeserializationContext ctx
-        ) throws IOException, JacksonException {
-            JsonNode node = jp.getCodec().readTree(jp);
-            UUID trackerId = UUID.fromString(node.get("trackerId").asText());
-            String typeName = node.get("typeName").asText();
-            String propName = node.get("propName").isNull() ? null : node.get("propName").asText();
-            InvalidateMessage message = new InvalidateMessage(trackerId, typeName, propName);
-            ImmutableProp idProp = message.getType().getIdProp();
-            message.ids = ctx.readTreeAsValue(
-                    node.get("ids"),
-                    CollectionType.construct(
-                            List.class,
-                            null,
-                            null,
-                            null,
-                            SimpleType.constructUnsafe(idProp.getReturnClass())
-                    )
-            );
-            return message;
-        }
     }
 }

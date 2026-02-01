@@ -17,6 +17,7 @@ import org.babyfish.jimmer.sql.kt.KSqlClient;
 import org.babyfish.jimmer.sql.runtime.JSqlClientImplementor;
 import org.dataloader.DataLoader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.graphql.execution.BatchLoaderRegistry;
@@ -24,10 +25,10 @@ import org.springframework.graphql.execution.GraphQlSource;
 import org.springframework.graphql.execution.RuntimeWiringConfigurer;
 import reactor.core.publisher.Mono;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+@AutoConfiguration
 @ConditionalOnClass({GraphQL.class, GraphQlSource.class})
 public class JimmerSpringGraphQLAutoConfiguration {
 
@@ -55,7 +56,7 @@ public class JimmerSpringGraphQLAutoConfiguration {
                     } else if (prop.isReferenceList(TargetLevel.ENTITY)) {
                         registry.forName(prop.toString()).registerMappedBatchLoader((sources, env) -> {
                             return Mono.just(
-                                    (Map<Object, Object>) (Map<?, ?>)sqlClient
+                                    (Map<Object, Object>) (Map<?, ?>) sqlClient
                                             .getLoaders()
                                             .list(
                                                     new TypedPropImpl.ReferenceList<>(prop)
@@ -177,7 +178,7 @@ public class JimmerSpringGraphQLAutoConfiguration {
         boolean isUnloaded(Object value) {
             SelectionSet selectionSet = env.getMergedField().getSingleField().getSelectionSet();
             if (value instanceof List<?>) {
-                for (Object e : (List<?>)value) {
+                for (Object e : (List<?>) value) {
                     if (e instanceof ImmutableSpi && isUnloaded((ImmutableSpi) e, selectionSet)) {
                         return true;
                     }

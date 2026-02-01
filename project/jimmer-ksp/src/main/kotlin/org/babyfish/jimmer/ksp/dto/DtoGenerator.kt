@@ -841,9 +841,6 @@ class DtoGenerator private constructor(
             FunSpec
                 .constructorBuilder()
                 .apply {
-                    if (!isBuilderRequired) {
-                        addAnnotation(ctx.jacksonTypes.jsonCreator)
-                    }
                     for (prop in dtoType.dtoProps) {
                         addParameter(
                             ParameterSpec.builder(prop.name, propTypeName(prop))

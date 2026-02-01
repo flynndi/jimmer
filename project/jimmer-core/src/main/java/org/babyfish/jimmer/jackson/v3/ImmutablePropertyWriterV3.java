@@ -6,11 +6,11 @@ import tools.jackson.databind.ser.BeanPropertyWriter;
 import org.babyfish.jimmer.meta.PropId;
 import org.babyfish.jimmer.runtime.ImmutableSpi;
 
-class ImmutablePropertyWriter3 extends BeanPropertyWriter {
+class ImmutablePropertyWriterV3 extends BeanPropertyWriter {
 
     private final PropId propId;
 
-    public ImmutablePropertyWriter3(BeanPropertyWriter base, PropId propId) {
+    public ImmutablePropertyWriterV3(BeanPropertyWriter base, PropId propId) {
         super(base);
         this.propId = propId;
     }

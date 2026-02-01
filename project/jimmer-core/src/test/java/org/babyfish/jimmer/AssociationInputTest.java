@@ -1,6 +1,5 @@
 package org.babyfish.jimmer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.babyfish.jimmer.model.AssociationInput;
 import org.babyfish.jimmer.model.AssociationInputDraft;
 import org.babyfish.jimmer.model.Immutables;
@@ -12,7 +11,7 @@ import java.util.ListIterator;
 public class AssociationInputTest implements Immutables {
 
     @Test
-    public void test() throws JsonProcessingException {
+    public void test() throws Exception {
         AssociationInput input = Immutables.createAssociationInput(i -> {
             i.setParentId(3L);
             i.childIds(true).add(10L);

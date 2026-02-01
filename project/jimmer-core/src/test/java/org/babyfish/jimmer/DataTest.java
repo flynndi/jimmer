@@ -1,6 +1,5 @@
 package org.babyfish.jimmer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.babyfish.jimmer.model.Data;
 import org.babyfish.jimmer.model.DataDraft;
 import org.junit.jupiter.api.Assertions;
@@ -20,11 +19,11 @@ public class DataTest {
                             Arrays.asList(5L, 6L)
                     )
             );
-            draft.setArr(new long[] { 7L, 8L });
+            draft.setArr(new long[]{7L, 8L});
             draft.setNestedArr(
-                    new long[][] {
-                            { 9L, 10L },
-                            { 11L, 12L }
+                    new long[][]{
+                            {9L, 10L},
+                            {11L, 12L}
                     }
             );
         });
@@ -38,7 +37,7 @@ public class DataTest {
     }
 
     @Test
-    public void testDeserialize() throws JsonProcessingException {
+    public void testDeserialize() {
         String json = "{\"list\":[1,2]," +
                 "\"nestedList\":[[3,4],[5,6]]," +
                 "\"arr\":[7,8]," +

@@ -1,19 +1,19 @@
 package org.babyfish.jimmer.sql.middle;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.babyfish.jimmer.jackson.codec.JsonCodec;
 import org.babyfish.jimmer.sql.JSqlClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec;
 
 public class BinLogTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final JsonCodec<?> JSON_CODEC = jsonCodec();
 
     private JSqlClient sqlClient;
 
@@ -44,17 +44,17 @@ public class BinLogTest {
     }
 
     @Test
-    public void testLogicalDeletion() throws JsonProcessingException {
+    public void testLogicalDeletion() throws Exception {
         sqlClient.getBinLog().accept(
                 "[SHOP_customer_mappING]",
-                MAPPER.readTree("{" +
+                JSON_CODEC.treeReader().read("{" +
                         "\"[shop_ID]\": 1," +
                         "\"`CUSTOMER_ID`\": 1," +
                         "\"DELETED_millis\": 0," +
                         "\"[tyPE]\": \"VIP\"" +
                         "}"
                 ),
-                MAPPER.readTree("{" +
+                JSON_CODEC.treeReader().read("{" +
                         "\"[deleted_Millis]\": 1" +
                         "}"
                 )
@@ -69,17 +69,17 @@ public class BinLogTest {
     }
 
     @Test
-    public void tetLogicalInsertion() throws JsonProcessingException {
+    public void tetLogicalInsertion() throws Exception {
         sqlClient.getBinLog().accept(
                 "[SHOP_customer_mappING]",
-                MAPPER.readTree("{" +
+                JSON_CODEC.treeReader().read("{" +
                         "\"[shop_ID]\": 1," +
                         "\"`CUSTOMER_ID`\": 4," +
                         "\"DELETED_millis\": -1," +
                         "\"[tyPE]\": \"ORDINARY\"" +
                         "}"
                 ),
-                MAPPER.readTree("{" +
+                JSON_CODEC.treeReader().read("{" +
                         "\"[deleted_Millis]\": 0" +
                         "}"
                 )
@@ -94,17 +94,17 @@ public class BinLogTest {
     }
 
     @Test
-    public void testChangeType() throws JsonProcessingException {
+    public void testChangeType() throws Exception {
         sqlClient.getBinLog().accept(
                 "[SHOP_customer_mappING]",
-                MAPPER.readTree("{" +
+                JSON_CODEC.treeReader().read("{" +
                         "\"[shop_ID]\": 1," +
                         "\"`CUSTOMER_ID`\": 1," +
                         "\"DELETED_millis\": 0," +
                         "\"[tyPE]\": \"VIP\"" +
                         "}"
                 ),
-                MAPPER.readTree("{" +
+                JSON_CODEC.treeReader().read("{" +
                         "\"`TypE`\": \"ORDINARY\"" +
                         "}"
                 )
@@ -123,17 +123,17 @@ public class BinLogTest {
     }
 
     @Test
-    public void testChangeEverything() throws JsonProcessingException {
+    public void testChangeEverything() throws Exception {
         sqlClient.getBinLog().accept(
                 "[SHOP_customer_mappING]",
-                MAPPER.readTree("{" +
+                JSON_CODEC.treeReader().read("{" +
                         "\"[shop_ID]\": 1," +
                         "\"`CUSTOMER_ID`\": 1," +
                         "\"DELETED_millis\": 0," +
                         "\"[tyPE]\": \"VIP\"" +
                         "}"
                 ),
-                MAPPER.readTree("{" +
+                JSON_CODEC.treeReader().read("{" +
                         "\"[shop_ID]\": 1," +
                         "\"`CUSTOMER_ID`\": 9," +
                         "\"[tyPE]\": \"ORDINARY\"" +

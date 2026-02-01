@@ -1,20 +1,19 @@
 package org.babyfish.jimmer.sql.dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.babyfish.jimmer.sql.common.Tests;
 import org.babyfish.jimmer.sql.model.Book;
 import org.babyfish.jimmer.sql.model.dto.DynamicBookInput;
 import org.babyfish.jimmer.sql.model.dto.DynamicBookInput2;
 import org.babyfish.jimmer.sql.model.dto.DynamicBookStoreInput;
 import org.babyfish.jimmer.sql.model.dto.FuzzyBookInput;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule;
 
 public class DynamicAndFuzzyInputTest extends Tests {
 
     @Test
-    public void testDynamicBookInput() throws JsonProcessingException {
+    public void testDynamicBookInput() throws Exception {
         DynamicBookInput input = new DynamicBookInput();
         input.setName("SQL in Action");
         String json = "{\"name\":\"SQL in Action\"}";
@@ -22,7 +21,8 @@ public class DynamicAndFuzzyInputTest extends Tests {
                 json,
                 input.toEntity()
         );
-        Book book = new ObjectMapper().readValue(json, DynamicBookInput.class)
+        Book book = jsonCodecWithoutImmutableModule().readerFor(DynamicBookInput.class)
+                .read(json)
                 .toEntity();
         assertContentEquals(
                 json,
@@ -31,11 +31,13 @@ public class DynamicAndFuzzyInputTest extends Tests {
     }
 
     @Test
-    public void testDynamicBookInput2() throws JsonProcessingException {
+    public void testDynamicBookInput2() throws Exception {
         DynamicBookInput2 input = new DynamicBookInput2();
         input.setParentName("MANNING");
         assertContentEquals("DynamicBookInput2(parentName=MANNING)", input);
-        Book book = new ObjectMapper().readValue("{\"parentName\":\"MANNING\"}", DynamicBookInput2.class)
+        Book book = jsonCodecWithoutImmutableModule()
+                .readerFor(DynamicBookInput2.class)
+                .read("{\"parentName\":\"MANNING\"}")
                 .toEntity();
         assertContentEquals(
                 "{\"store\":{\"name\":\"MANNING\"}}",
@@ -44,7 +46,7 @@ public class DynamicAndFuzzyInputTest extends Tests {
     }
 
     @Test
-    public void testDynamicBookStoreInput() throws JsonProcessingException {
+    public void testDynamicBookStoreInput() throws Exception {
         DynamicBookStoreInput input = new DynamicBookStoreInput();
         input.setName("MANNING");
         String json = "{\"name\":\"MANNING\"}";
@@ -52,7 +54,9 @@ public class DynamicAndFuzzyInputTest extends Tests {
                 json,
                 input.toEntity()
         );
-        Book book = new ObjectMapper().readValue(json, DynamicBookInput.class)
+        Book book = jsonCodecWithoutImmutableModule()
+                .readerFor(DynamicBookInput.class)
+                .read(json)
                 .toEntity();
         assertContentEquals(
                 json,
@@ -61,15 +65,17 @@ public class DynamicAndFuzzyInputTest extends Tests {
     }
 
     @Test
-    public void testIssue994() throws JsonProcessingException {
+    public void testIssue994() throws Exception {
         DynamicBookInput input = new DynamicBookInput();
         input.setName("MANNING");
-        String json = new ObjectMapper().writeValueAsString(input);
+        String json = jsonCodecWithoutImmutableModule().writer().writeAsString(input);
         assertContentEquals(
                 "{\"name\":\"MANNING\"}",
                 json
         );
-        Book book = new ObjectMapper().readValue(json, DynamicBookInput.class)
+        Book book = jsonCodecWithoutImmutableModule()
+                .readerFor(DynamicBookInput.class)
+                .read(json)
                 .toEntity();
         assertContentEquals(
                 "{\"name\":\"MANNING\"}",
@@ -78,10 +84,10 @@ public class DynamicAndFuzzyInputTest extends Tests {
     }
 
     @Test
-    public void testFuzzyInput() throws JsonProcessingException {
+    public void testFuzzyInput() throws Exception {
         FuzzyBookInput input = new FuzzyBookInput();
         input.setName("SQL in Action");
-        String json = new ObjectMapper().writeValueAsString(input);
+        String json = jsonCodecWithoutImmutableModule().writer().writeAsString(input);
         String fuzzyJson = "{" +
                 "\"name\":\"SQL in Action\"," +
                 "\"edition\":null," +
@@ -94,7 +100,9 @@ public class DynamicAndFuzzyInputTest extends Tests {
                 "{\"name\":\"SQL in Action\"}",
                 input.toEntity().toString()
         );
-        Book book = new ObjectMapper().readValue(fuzzyJson, FuzzyBookInput.class)
+        Book book = jsonCodecWithoutImmutableModule()
+                .readerFor(FuzzyBookInput.class)
+                .read(fuzzyJson)
                 .toEntity();
         assertContentEquals(
                 "{\"name\":\"SQL in Action\"}",

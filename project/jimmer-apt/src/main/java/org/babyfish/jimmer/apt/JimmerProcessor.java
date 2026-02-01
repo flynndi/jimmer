@@ -71,8 +71,6 @@ public class JimmerProcessor extends AbstractProcessor {
 
     private Modifier dtoFieldModifier;
 
-    private boolean jackson3;
-
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latest();
@@ -150,13 +148,6 @@ public class JimmerProcessor extends AbstractProcessor {
                     );
             }
         }
-        String jakcson3Text = processingEnv.getOptions().get("jimmer.jackson3");
-        boolean jackson3;
-        if (jakcson3Text == null || jakcson3Text.isEmpty()) {
-            jackson3 = false; // processingEnv.getElementUtils().getTypeElement("tools.jackson.annotation.JsonIgnore") != null;
-        } else {
-            jackson3 = "true".equals(jakcson3Text);
-        }
         context = new Context(
                 processingEnv.getElementUtils(),
                 processingEnv.getTypeUtils(),
@@ -164,20 +155,23 @@ public class JimmerProcessor extends AbstractProcessor {
                 "true".equals(processingEnv.getOptions().get("jimmer.keepIsPrefix")),
                 includeArr,
                 excludeArr,
-                jackson3,
+                detectIsJackson3(processingEnv),
                 processingEnv.getOptions().get("jimmer.entry.immutables"),
                 processingEnv.getOptions().get("jimmer.entry.tables"),
                 processingEnv.getOptions().get("jimmer.entry.tableExes"),
                 processingEnv.getOptions().get("jimmer.entry.fetchers"),
-                "true".equals(
-                        processingEnv.getOptions().get("jimmer.dto.hibernateValidatorEnhancement")
-                ),
-                "true".equals(
-                        processingEnv.getOptions().get("jimmer.buddy.ignoreResourceGeneration")
-                ),
+                "true".equals(processingEnv.getOptions().get("jimmer.dto.hibernateValidatorEnhancement")),
+                "true".equals(processingEnv.getOptions().get("jimmer.buddy.ignoreResourceGeneration")),
                 dtoFieldModifier
         );
         elements = processingEnv.getElementUtils();
+    }
+
+    private static boolean detectIsJackson3(ProcessingEnvironment processingEnv) {
+        String jackson3Text = processingEnv.getOptions().get("jimmer.jackson3");
+        return jackson3Text == null || jackson3Text.isEmpty() ?
+                processingEnv.getElementUtils().getTypeElement("tools.jackson.databind.ObjectMapper") != null :
+                "true".equals(jackson3Text);
     }
 
     @Override

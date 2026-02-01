@@ -15,6 +15,7 @@ import java.util.*;
 public class InputBuilderGenerator {
 
     private static final String[] JACKSON_ANNO_PREFIXIES = new String[] {
+            "tools.jackson.databind.annotation.",
             "com.fasterxml.jackson.databind.annotation.",
             "com.fasterxml.jackson.annotation."
     };

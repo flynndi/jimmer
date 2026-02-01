@@ -1,16 +1,17 @@
 package org.babyfish.jimmer.support;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.babyfish.jimmer.jackson.codec.JsonReader;
 import org.junit.jupiter.api.Assertions;
 
+import static org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodecWithoutImmutableModule;
+
 public class JsonAssertions {
-    private static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
+    private static final JsonReader<?> READER = jsonCodecWithoutImmutableModule().treeReader();
 
     public static void assertJsonEquals(String expected, String actual) {
         try {
-            Assertions.assertEquals(MAPPER.readTree(expected), MAPPER.readTree(actual));
-        } catch (JsonProcessingException e) {
+            Assertions.assertEquals(READER.read(expected), READER.read(actual));
+        } catch (Exception e) {
             throw new IllegalArgumentException("Input strings are not json", e);
         }
     }

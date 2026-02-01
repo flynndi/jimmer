@@ -1,8 +1,6 @@
 package org.babyfish.jimmer.sql.kt.common
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import org.babyfish.jimmer.jackson.ImmutableModule
+import org.babyfish.jimmer.jackson.codec.JsonCodec.jsonCodec
 import org.babyfish.jimmer.meta.ImmutableProp
 import org.babyfish.jimmer.sql.ast.mutation.QueryReason
 import org.babyfish.jimmer.sql.kt.KSqlClient
@@ -156,15 +154,10 @@ abstract class AbstractTest {
         @BeforeClass
         @JvmStatic
         fun beforeAll() {
-            jdbc {con ->
+            jdbc { con ->
                 initDatabase(con)
             }
         }
-
-        @JvmStatic
-        protected val MAPPER: ObjectMapper = ObjectMapper()
-            .registerModule(ImmutableModule())
-            .registerModule(JavaTimeModule())
 
         @JvmStatic
         protected fun contentEquals(
@@ -179,10 +172,10 @@ abstract class AbstractTest {
 
             // Try to parse as JSON and compare semantically to handle property ordering issues
             try {
-                val expectedJson = MAPPER.readTree(normalizedExpected)
-                val actualJson = MAPPER.readTree(actual)
+                val expectedJson = jsonCodec().treeReader().read(normalizedExpected)
+                val actualJson = jsonCodec().treeReader().read(actual)
                 assertEquals(expectedJson, actualJson, message)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Fall back to string comparison if JSON parsing fails
                 assertEquals(normalizedExpected, actual, message)
             }

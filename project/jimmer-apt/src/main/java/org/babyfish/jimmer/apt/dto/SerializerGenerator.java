@@ -41,6 +41,7 @@ public class SerializerGenerator {
     }
 
     private MethodSpec newSerialize() {
+        String serializeFieldMethodName = parentGenerator.ctx.isJackson3() ? "defaultSerializeProperty" : "defaultSerializeField";
         MethodSpec.Builder builder = MethodSpec
                 .methodBuilder("serialize")
                 .addModifiers(Modifier.PUBLIC)
@@ -56,8 +57,10 @@ public class SerializerGenerator {
                 .addParameter(
                         parentGenerator.ctx.getJacksonTypes().serializerProvider,
                         "provider"
-                )
-                .addException(IOException.class);
+                );
+        if (!parentGenerator.ctx.isJackson3()) {
+            builder.addException(IOException.class);
+        }
         builder.addStatement("gen.writeStartObject()");
         for (DtoProp<?, ?> prop : dtoType.getDtoProps()) {
             DtoModifier inputModifier = prop.getInputModifier();
@@ -67,14 +70,16 @@ public class SerializerGenerator {
                         StringUtil.identifier("is", prop.getName(), "Loaded")
                 );
                 builder.addStatement(
-                        "provider.defaultSerializeField($S, input.$L(), gen)",
+                        "provider.$L($S, input.$L(), gen)",
+                        serializeFieldMethodName,
                         prop.getName(),
                         parentGenerator.getterName(prop)
                 );
                 builder.endControlFlow();
             } else {
                 builder.addStatement(
-                        "provider.defaultSerializeField($S, input.$L(), gen)",
+                        "provider.$L($S, input.$L(), gen)",
+                        serializeFieldMethodName,
                         prop.getName(),
                         parentGenerator.getterName(prop)
                 );

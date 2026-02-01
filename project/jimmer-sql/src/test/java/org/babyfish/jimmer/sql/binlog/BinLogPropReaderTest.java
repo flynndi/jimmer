@@ -23,13 +23,13 @@ public class BinLogPropReaderTest {
     private final BinLogParser parser =
             ((BinLogImpl) JSqlClient
                     .newBuilder()
-                    .setBinLogPropReader(LocalDateTime.class, (prop, jsonNode) ->
-                            Instant.ofEpochMilli(Long.parseLong(jsonNode.asText()) / 1000)
+                    .setBinLogPropReader(LocalDateTime.class, (prop, node) ->
+                            Instant.ofEpochMilli(Long.parseLong(node.castTo(String.class)) / 1000)
                                     .atOffset(ZoneOffset.ofHours(8)).toLocalDateTime())
                     .setBinLogPropReader(BookProps.PRICE, (prop, jsonNode) ->
                             Decimal.toLogical(
                                     BOOK_PRICE_SCHEMA,
-                                    Base64.getDecoder().decode(jsonNode.asText())
+                                    Base64.getDecoder().decode(jsonNode.castTo(String.class))
                             ))
                     .build()
                     .getBinLog()
@@ -40,21 +40,21 @@ public class BinLogPropReaderTest {
         Book book = parser.parseEntity(
                 Book.class,
                 "{\n" +
-                "      \"id\": \"b649b11b-1161-4ad2-b261-af0112fdd7c8\",\n" +
-                "      \"name\": \"Learning GraphQL\",\n" +
-                "      \"edition\": 2,\n" +
-                "      \"price\": \"FXw=\",\n" +
-                "      \"store_id\": \"2fa3955e-3e83-49b9-902e-0465c109c779\"\n" +
-                "   }"
+                        "      \"id\": \"b649b11b-1161-4ad2-b261-af0112fdd7c8\",\n" +
+                        "      \"name\": \"Learning GraphQL\",\n" +
+                        "      \"edition\": 2,\n" +
+                        "      \"price\": \"FXw=\",\n" +
+                        "      \"store_id\": \"2fa3955e-3e83-49b9-902e-0465c109c779\"\n" +
+                        "   }"
         );
         Assertions.assertEquals(
                 "{" +
-                "\"id\":\"b649b11b-1161-4ad2-b261-af0112fdd7c8\"," +
-                "\"name\":\"Learning GraphQL\"," +
-                "\"edition\":2," +
-                "\"price\":55.00," +
-                "\"store\":{\"id\":\"2fa3955e-3e83-49b9-902e-0465c109c779\"}" +
-                "}",
+                        "\"id\":\"b649b11b-1161-4ad2-b261-af0112fdd7c8\"," +
+                        "\"name\":\"Learning GraphQL\"," +
+                        "\"edition\":2," +
+                        "\"price\":55.00," +
+                        "\"store\":{\"id\":\"2fa3955e-3e83-49b9-902e-0465c109c779\"}" +
+                        "}",
                 book.toString()
         );
     }
@@ -64,15 +64,15 @@ public class BinLogPropReaderTest {
         Administrator administrator = parser.parseEntity(
                 Administrator.class,
                 "{" +
-                "\"created_time\": 1688419256525125,\n" +
-                "\"modified_time\": 1688419256525125" +
-                "}"
+                        "\"created_time\": 1688419256525125,\n" +
+                        "\"modified_time\": 1688419256525125" +
+                        "}"
         );
         Assertions.assertEquals(
                 "{" +
-                "\"createdTime\":\"2023-07-04 05:20:56\"," +
-                "\"modifiedTime\":\"2023-07-04 05:20:56\"" +
-                "}",
+                        "\"createdTime\":\"2023-07-04 05:20:56\"," +
+                        "\"modifiedTime\":\"2023-07-04 05:20:56\"" +
+                        "}",
                 administrator.toString()
         );
     }
