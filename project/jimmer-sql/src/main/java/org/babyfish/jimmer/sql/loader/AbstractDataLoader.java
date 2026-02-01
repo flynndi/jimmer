@@ -7,6 +7,7 @@ import org.babyfish.jimmer.runtime.DraftSpi;
 import org.babyfish.jimmer.runtime.ImmutableSpi;
 import org.babyfish.jimmer.runtime.Internal;
 import org.babyfish.jimmer.sql.TransientResolver;
+import org.babyfish.jimmer.sql.TypedTransientResolver;
 import org.babyfish.jimmer.sql.association.meta.AssociationType;
 import org.babyfish.jimmer.sql.ast.Expression;
 import org.babyfish.jimmer.sql.ast.Selection;
@@ -250,7 +251,7 @@ public abstract class AbstractDataLoader {
             Map<Object, Object> fetchedMap;
             TransientResolverContext ctx = TransientResolverContext.push(con, resolver, sourceIds);
             try {
-                fetchedMap = fetchResolvedMap(resolveWithDefaultValue(resolver, sourceIds));
+                fetchedMap = fetchResolvedMap(resolveWithDefaultValue(resolver, sourceIds, sources));
             } finally {
                 TransientResolverContext.pop(ctx);
             }
@@ -267,7 +268,7 @@ public abstract class AbstractDataLoader {
                 (ids) -> {
                     TransientResolverContext ctx = TransientResolverContext.push(con, resolver, ids);
                     try {
-                        return resolveWithDefaultValue(resolver, ids);
+                        return resolveWithDefaultValue(resolver, ids, null);
                     } finally {
                         TransientResolverContext.pop(ctx);
                     }
@@ -877,11 +878,35 @@ public abstract class AbstractDataLoader {
         return true;
     }
 
+    private static final class TypedTransientResolverContextImpl<E> implements TypedTransientResolver.Context<E> {
+        private final Collection<? extends E> content;
+
+        public TypedTransientResolverContextImpl(Collection<? extends E> content) {
+            this.content = content;
+        }
+
+        @Override
+        public Collection<? extends E> getContent() {
+            return content;
+        }
+    }
+
+    /**
+     * @param sources source immutable spi list, nullable
+     */
     private Map<Object, Object> resolveWithDefaultValue(
             TransientResolver<Object, Object> resolver,
-            Collection<Object> ids
+            Collection<Object> ids,
+            Collection<ImmutableSpi> sources
     ) {
-        Map<Object, Object> valueMap = resolver.resolve(ids);
+        Map<Object, Object> valueMap;
+        if (resolver instanceof TypedTransientResolver<?, ?, ?> && sources != null) {
+            TypedTransientResolver.Context<Object> context = new TypedTransientResolverContextImpl<>(sources);
+            valueMap = ((TypedTransientResolver<Object, Object, Object>) resolver).resolve(ids, context);
+        } else {
+            valueMap = resolver.resolve(ids);
+        }
+
         if (valueMap.keySet().containsAll(ids)) {
             return valueMap;
         }
