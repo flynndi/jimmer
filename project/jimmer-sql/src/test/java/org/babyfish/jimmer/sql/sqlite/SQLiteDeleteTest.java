@@ -48,12 +48,12 @@ public class SQLiteDeleteTest extends AbstractMutationTest {
                     });
                     ctx.statement(it -> {
                         it.sql(
-                                "delete from TREE_NODE " +
+                                "delete from TREE_NODE as tb_1_ " +
                                         "where exists(" +
                                         "--->select * " +
                                         "--->from TREE_NODE tb_2_ " +
                                         "--->where " +
-                                        "--->--->TREE_NODE.PARENT_ID = tb_2_.NODE_ID " +
+                                        "--->--->tb_1_.PARENT_ID = tb_2_.NODE_ID " +
                                         "--->and " +
                                         "--->--->tb_2_.PARENT_ID in (?, ?, ?, ?, ?, ?, ?, ?)" +
                                         ")"
@@ -73,12 +73,12 @@ public class SQLiteDeleteTest extends AbstractMutationTest {
                     });
                     ctx.statement(it -> {
                         it.sql(
-                                "delete from TREE_NODE " +
+                                "delete from TREE_NODE as tb_1_ " +
                                         "where exists(" +
                                         "--->select * " +
                                         "--->from TREE_NODE tb_2_ " +
                                         "--->where " +
-                                        "--->--->TREE_NODE.PARENT_ID = tb_2_.NODE_ID " +
+                                        "--->--->tb_1_.PARENT_ID = tb_2_.NODE_ID " +
                                         "--->and " +
                                         "--->--->tb_2_.PARENT_ID = ?" +
                                         ")"

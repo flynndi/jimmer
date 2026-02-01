@@ -51,9 +51,9 @@ public interface Dialect extends SqlTypeStrategy {
 
     default boolean isDeletedAliasRequired() { return false; }
 
-    default boolean isDeleteAliasSupported() { return true; }
+    default boolean isDeleteNeedsAsKeyword() { return false; }
 
-    default boolean isUpdateAliasSupported() { return true; }
+    default boolean isUpdateNeedsAsKeyword() { return false; }
 
     @Nullable
     default String getOffsetOptimizationNumField() {

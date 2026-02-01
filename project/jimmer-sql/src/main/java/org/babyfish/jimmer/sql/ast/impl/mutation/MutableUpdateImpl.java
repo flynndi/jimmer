@@ -10,6 +10,7 @@ import org.babyfish.jimmer.sql.ast.PropExpression;
 import org.babyfish.jimmer.sql.ast.impl.*;
 import org.babyfish.jimmer.sql.ast.impl.query.FilterLevel;
 import org.babyfish.jimmer.sql.ast.impl.query.UseTableVisitor;
+import org.babyfish.jimmer.sql.ast.impl.render.AbstractSqlBuilder;
 import org.babyfish.jimmer.sql.ast.impl.table.*;
 import org.babyfish.jimmer.sql.ast.mutation.MutableUpdate;
 import org.babyfish.jimmer.sql.ast.table.Table;
@@ -270,6 +271,15 @@ public class MutableUpdateImpl
         }
     }
 
+    private void addAlias(SqlBuilder builder) {
+        if (getSqlClient().getDialect().isUpdateNeedsAsKeyword()) {
+            builder.sql(" as ");
+        } else {
+            builder.sql(" ");
+        }
+        builder.sql(getTableLikeImplementor().realTable(builder.getAstContext()).getAlias());
+    }
+
     private void renderTo(@NotNull SqlBuilder builder, Collection<Object> ids) {
         AstContext astContext = builder.getAstContext();
         astContext.pushStatement(this);
@@ -283,9 +293,7 @@ public class MutableUpdateImpl
                     .sql("update ")
                     .sql(table.getImmutableType().getTableName(getSqlClient().getMetadataStrategy()));
 
-            if (getSqlClient().getDialect().isUpdateAliasSupported()) {
-                builder.sql(" ").sql(table.realTable(builder.getAstContext()).getAlias());
-            }
+            addAlias(builder);
 
             UpdateJoin updateJoin = dialect.getUpdateJoin();
             if (updateJoin != null && updateJoin.getFrom() == UpdateJoin.From.UNNECESSARY) {
@@ -328,12 +336,9 @@ public class MutableUpdateImpl
             if (ids != null) {
                 builder
                         .from()
-                        .sql(table.getImmutableType().getTableName(strategy))
-                        .sql(" ");
+                        .sql(table.getImmutableType().getTableName(strategy));
 
-                if (getSqlClient().getDialect().isUpdateAliasSupported()) {
-                    builder.sql(table.realTable(astContext).getAlias());
-                }
+                addAlias(builder);
 
                 builder.enter(SqlBuilder.ScopeType.WHERE);
                 NativePredicates.renderPredicates(

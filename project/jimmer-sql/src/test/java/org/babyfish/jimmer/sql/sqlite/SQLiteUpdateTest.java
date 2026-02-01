@@ -30,7 +30,7 @@ public class SQLiteUpdateTest extends AbstractMutationTest {
                 }),
                 ctx -> {
                     ctx.statement(it -> {
-                        it.sql("update AUTHOR set LAST_NAME = ? where AUTHOR.ID = ?");
+                        it.sql("update AUTHOR as tb_1_ set LAST_NAME = ? where tb_1_.ID = ?");
                         it.variables("Sammer", sammerId);
                     });
                     ctx.rowCount(1);

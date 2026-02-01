@@ -18,13 +18,13 @@ import java.util.List;
 
 public class SQLiteDialect extends DefaultDialect {
     @Override
-    public boolean isDeleteAliasSupported() {
-        return false;
+    public boolean isDeleteNeedsAsKeyword() {
+        return true;
     }
 
     @Override
-    public boolean isUpdateAliasSupported() {
-        return false;
+    public boolean isUpdateNeedsAsKeyword() {
+        return true;
     }
 
     @Override
