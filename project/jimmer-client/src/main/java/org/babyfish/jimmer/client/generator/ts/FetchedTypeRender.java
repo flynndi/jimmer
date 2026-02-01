@@ -61,10 +61,10 @@ public class FetchedTypeRender implements Render {
             if (targetType instanceof ObjectType) {
                 ObjectType targetObjectType = (ObjectType) targetType;
                 if (targetObjectType.isRecursiveFetchedType() && !objectType.hasMultipleRecursiveProps()) {
-                    collectRecursiveTypeNames((ObjectType) targetType);
-                } else {
+                    collectRecursiveTypeNames(targetObjectType);
+                } else if (!(type.getJavaType().equals(targetObjectType.getJavaType()) && paths.contains(property.getName()))) {
                     paths.push(property.getName());
-                    collectRecursiveTypeNames((ObjectType) targetType);
+                    collectRecursiveTypeNames(targetObjectType);
                     paths.pop();
                 }
             }
