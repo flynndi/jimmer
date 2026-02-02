@@ -10,4 +10,5 @@ dependencies {
     implementation(libs.spring.core)
     implementation(libs.intellij.annotations)
     implementation(libs.javapoet)
+    implementation(libs.jackson2.databind)
 }

@@ -11,4 +11,5 @@ dependencies {
     implementation(libs.ksp.symbolProcessing.api)
     implementation(libs.kotlinpoet)
     implementation(libs.kotlinpoet.ksp)
+    implementation(libs.jackson2.databind)
 }
