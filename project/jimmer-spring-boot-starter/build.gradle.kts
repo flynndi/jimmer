@@ -16,6 +16,8 @@ dependencies {
     compileOnly(libs.spring.graphql)
     compileOnly(libs.jakartaee.api)
     compileOnly(libs.springdoc.openapi.common)
+    compileOnly(libs.jackson2.databind)
+    compileOnly(libs.jackson3.databind)
 
     annotationProcessor(libs.spring.boot.configurationProcessor)
 
