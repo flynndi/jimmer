@@ -45,6 +45,18 @@ public class NodeV2 implements Node {
     }
 
     @Override
+    public Node get(final int index) {
+        JsonNode jsonNode = node.get(index);
+        return jsonNode != null ? new NodeV2(jsonNode) : null;
+    }
+
+    @Override
+    public Node get(final String fieldName) {
+        JsonNode jsonNode = node.get(fieldName);
+        return jsonNode != null ? new NodeV2(jsonNode) : null;
+    }
+
+    @Override
     public Iterator<Map.Entry<String, Node>> fieldsIterator() {
         return new NodePropertiesIteratorV2(node.fields());
     }
