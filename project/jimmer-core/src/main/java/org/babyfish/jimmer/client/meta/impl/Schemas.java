@@ -57,10 +57,10 @@ public class Schemas {
     }
 
     private static boolean isAllowed(Collection<String> elementGroups, Set<String> allowedGroups) {
-        if (elementGroups == null) {
+        if (elementGroups == null || elementGroups.isEmpty()) {
             return true;
         }
-        if (allowedGroups == null) {
+        if (allowedGroups == null || allowedGroups.isEmpty()) {
             return true;
         }
         for (String elementGroup : elementGroups) {
