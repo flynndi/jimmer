@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.swagger.ui)
+    implementation(libs.scalar.core)
 }

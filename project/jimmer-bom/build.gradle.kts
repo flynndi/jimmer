@@ -8,6 +8,7 @@ dependencies {
         api(projects.jimmerApt)
         api(projects.jimmerClient)
         api(projects.jimmerClientSwagger)
+        api(projects.jimmerClientScalar)
         api(projects.jimmerCore)
         api(projects.jimmerCoreKotlin)
         api(projects.jimmerDtoCompiler)

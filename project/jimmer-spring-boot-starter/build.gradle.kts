@@ -28,6 +28,18 @@ dependencies {
     testImplementation(libs.spring.boot.starter.web)
     testImplementation(libs.h2)
     testRuntimeOnly(libs.bundles.jackson)
+    testRuntimeOnly(projects.jimmerClientSwagger)
+}
+
+tasks.processResources {
+    inputs.property("swagger", libs.versions.swaggerUi.get())
+    filesMatching("application.properties") {
+        expand(
+            mapOf(
+                "swaggerUiVersion" to libs.versions.swaggerUi.get().toString()
+            )
+        )
+    }
 }
 
 kotlin {

@@ -979,31 +979,46 @@ public class SpringJavaTest extends AbstractTest {
                 .andReturn();
         Thread.sleep(200);
         Assertions.assertEquals(
-                "<!DOCTYPE html>\n" +
+                "<!-- HTML for static distribution bundle build -->\n" +
+                        "<!DOCTYPE html>\n" +
                         "<html lang=\"en\">\n" +
-                        "<head>\n" +
-                        "  <link rel=\"icon\" href=\"./favicon.ico\" type=\"image/x-icon\">\n" +
-                        "  <meta charset=\"utf-8\" />\n" +
-                        "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n" +
-                        "  <meta\n" +
-                        "    name=\"description\"\n" +
-                        "    content=\"SwaggerUI\"\n" +
-                        "  />\n" +
-                        "  <title>Jimmer-SwaggerUI</title>\n" +
-                        "  <link rel=\"stylesheet\" href=\"https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui.css\" />\n" +
-                        "</head>\n" +
-                        "<body>\n" +
-                        "<div id=\"swagger-ui\"></div>\n" +
-                        "<script src=\"https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-bundle.js\" crossorigin></script>\n" +
-                        "<script>\n" +
-                        "  window.onload = () => {\n" +
-                        "    window.ui = SwaggerUIBundle({\n" +
-                        "      url: '/my-openapi.yml',\n" +
-                        "      dom_id: '#swagger-ui',\n" +
-                        "    });\n" +
-                        "  };\n" +
-                        "</script>\n" +
-                        "</body>\n" +
+                        "  <head>\n" +
+                        "    <meta charset=\"UTF-8\">\n" +
+                        "    <title>Swagger UI</title>\n" +
+                        "    <link rel=\"stylesheet\" type=\"text/css\" href=\"./swagger-ui.css\" />\n" +
+                        "    <link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n" +
+                        "    <link rel=\"icon\" type=\"image/png\" href=\"./favicon-32x32.png\" sizes=\"32x32\" />\n" +
+                        "    <link rel=\"icon\" type=\"image/png\" href=\"./favicon-16x16.png\" sizes=\"16x16\" />\n" +
+                        "  </head>\n" +
+                        "\n" +
+                        "  <body>\n" +
+                        "    <div id=\"swagger-ui\"></div>\n" +
+                        "    <script src=\"./swagger-ui-bundle.js\" charset=\"UTF-8\"> </script>\n" +
+                        "    <script src=\"./swagger-ui-standalone-preset.js\" charset=\"UTF-8\"> </script>\n" +
+                        "    <script>\n" +
+                        "      window.onload = function() {\n" +
+                        "        //<editor-fold desc=\"Changeable Configuration Block\">\n" +
+                        "\n" +
+                        "        // the following lines will be replaced by docker/configurator, when it runs in a docker-container\n" +
+                        "        window.ui = SwaggerUIBundle({\n" +
+                        "          url: '/my-openapi.yml',\n" +
+                        "          dom_id: '#swagger-ui',\n" +
+                        "          deepLinking: true,\n" +
+                        "          presets: [\n" +
+                        "            SwaggerUIBundle.presets.apis,\n" +
+                        "            SwaggerUIStandalonePreset\n" +
+                        "          ],\n" +
+                        "          plugins: [\n" +
+                        "            SwaggerUIBundle.plugins.DownloadUrl\n" +
+                        "          ],\n" +
+                        "          layout: \"StandaloneLayout\"\n" +
+                        "        });\n" +
+                        "\n" +
+                        "        //</editor-fold>\n" +
+                        "      };\n" +
+                        "\n" +
+                        "    </script>\n" +
+                        "  </body>\n" +
                         "</html>\n",
                 result.getResponse().getContentAsString()
         );

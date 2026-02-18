@@ -12,6 +12,7 @@ include(
     "jimmer-spring-boot-starter",
     "jimmer-dto-compiler",
     "jimmer-client-swagger",
+    "jimmer-client-scalar",
 )
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

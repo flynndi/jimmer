@@ -22,13 +22,10 @@ import java.util.Enumeration;
 @Controller
 public class OpenApiUiController {
 
-    private static final String CSS_RESOURCE = "META-INF/jimmer/swagger/swagger-ui.css";
-
-    private static final String JS_RESOURCE = "META-INF/jimmer/swagger/swagger-ui.js";
-
-    private static final String CSS_URL = "/jimmer-client/swagger-ui.css";
-
-    private static final String JS_URL = "/jimmer-client/swagger-ui.js";
+    private static final String VIEW_TEMPLATE = "META-INF/jimmer/openapi/index.html.template";
+    private static final String NO_UI = "META-INF/jimmer/openapi/no-ui.html";
+    private static final String NO_API = "META-INF/jimmer/openapi/no-api.html";
+    private static final String NO_METADATA = "META-INF/jimmer/openapi/no-metadata.html";
 
     private final JimmerProperties properties;
 
@@ -61,12 +58,12 @@ public class OpenApiUiController {
             refPath = contextPath + refPath;
         }
         String resource;
-        if (hasMetadata()) {
-            resource = refPath != null && !refPath.isEmpty() ?
-                    "META-INF/jimmer/openapi/index.html.template" :
-                    "META-INF/jimmer/openapi/no-api.html";
+        if (!exists(VIEW_TEMPLATE)) {
+            resource = NO_UI;
+        } else if (hasMetadata()) {
+            resource = refPath != null && !refPath.isEmpty() ? VIEW_TEMPLATE : NO_API;
         } else {
-            resource = "META-INF/jimmer/openapi/no-metadata.html";
+            resource = NO_METADATA;
         }
         StringBuilder builder = new StringBuilder();
         char[] buf = new char[1024];
@@ -93,17 +90,7 @@ public class OpenApiUiController {
         }
         return builder
                 .toString()
-            .replace("\r\n", "\n")  // Normalize line endings to LF
-                .replace("${openapi.css}",
-                        exists(CSS_RESOURCE) ?
-                                CSS_URL :
-                                "https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui.css"
-                )
-                .replace("${openapi.js}",
-                        exists(JS_RESOURCE) ?
-                                JS_URL :
-                                "https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-bundle.js"
-                )
+                .replace("\r\n", "\n")  // Normalize line endings to LF
                 .replace(
                         "${openapi.refPath}",
                         refPath
@@ -118,38 +105,6 @@ public class OpenApiUiController {
             }
         }
         return false;
-    }
-
-    @GetMapping(CSS_URL)
-    public ResponseEntity<StreamingResponseBody> css() throws IOException {
-        return downloadResource(CSS_RESOURCE, "text/css");
-    }
-
-    @GetMapping(JS_URL)
-    public ResponseEntity<StreamingResponseBody> js() throws IOException {
-        return downloadResource(JS_RESOURCE, "text/javascript");
-    }
-
-    private ResponseEntity<StreamingResponseBody> downloadResource(String resource, String contentType) throws IOException {
-        byte[] buf = new byte[4 * 1024];
-        InputStream in = OpenApiController.class.getClassLoader().getResourceAsStream(resource);
-        if (in == null) {
-            throw new IllegalStateException("The resource \"" + resource + "\" does not exist");
-        }
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Type", contentType);
-        StreamingResponseBody body = out -> {
-            try {
-                int len;
-                while ((len = in.read(buf)) != -1) {
-                    out.write(buf, 0, len);
-                }
-                out.flush();
-            } finally {
-                in.close();
-            }
-        };
-        return ResponseEntity.ok().headers(headers).body(body);
     }
 
     private static boolean exists(String resource) {
