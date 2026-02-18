@@ -418,33 +418,49 @@ class ImmutableProp(
             null
         }
 
-    val converterMetadata: ConverterMetadata? =
-        run {
-            val jsonConverter = propDeclaration.recursiveAnnotationOf(JsonConverter::class.qualifiedName!!)
-            val jsonFormat = propDeclaration.recursiveAnnotationOf(ctx.jacksonTypes.jsonFormat.reflectionName())
-            if (jsonConverter !== null && jsonFormat !== null) {
-                throw MetaException(
-                    propDeclaration,
-                    "it cannot be decorated both \"@${JsonConverter::class.qualifiedName}\" " +
-                        "and \"${ctx.jacksonTypes.jsonFormat.reflectionName()}\""
-                )
+    val converterMetadata: ConverterMetadata? by lazy {
+        var jsonConverter = propDeclaration.recursiveAnnotationOf(JsonConverter::class.qualifiedName!!)
+        val jsonFormat = propDeclaration.recursiveAnnotationOf(ctx.jacksonTypes.jsonFormat.reflectionName())
+
+        var autoApply = false
+        if (jsonConverter === null) {
+            resolveIdViewBaseProp()
+            if (idViewBaseProp !== null) {
+                autoApply = true
+                jsonConverter =
+                    idViewBaseProp?.declaringType?.idProp?.propDeclaration?.recursiveAnnotationOf(JsonConverter::class.qualifiedName!!)
             }
-            if (jsonConverter === null) {
-                null
-            } else {
-                val declaration = jsonConverter.getClassArgument(JsonConverter::value)!!
-                ctx.resolver.converterMetadataOf(declaration).also {
-                    if (it.sourceTypeName != typeName(overrideNullable = false)) {
-                        throw MetaException(
-                            propDeclaration,
-                            "the source type of converter " +
+        }
+
+        if (jsonConverter !== null && jsonFormat !== null) {
+            throw MetaException(
+                propDeclaration,
+                "it cannot be decorated both \"@${JsonConverter::class.qualifiedName}\" " +
+                        "and \"${ctx.jacksonTypes.jsonFormat.reflectionName()}\""
+            )
+        }
+        if (jsonConverter === null) {
+            null
+        } else {
+            val declaration = jsonConverter.getClassArgument(JsonConverter::value)!!
+            ctx.resolver.converterMetadataOf(declaration).let {
+                if (autoApply && isList) {
+                    it.toListMetadata(ctx.resolver)
+                } else {
+                    it
+                }
+            }.also {
+                if (it.sourceTypeName != typeName(overrideNullable = false)) {
+                    throw MetaException(
+                        propDeclaration,
+                        "the source type of converter " +
                                 "\"${declaration.qualifiedName!!.asString()}\" is \"" +
                                 "${it.sourceTypeName}\" does not match the return type of current property"
-                        )
-                    }
+                    )
                 }
             }
         }
+    }
 
     fun annotation(annotationType: KClass<out Annotation>): KSAnnotation? =
         propDeclaration.annotation(annotationType)

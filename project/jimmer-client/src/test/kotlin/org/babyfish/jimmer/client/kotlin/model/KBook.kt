@@ -1,7 +1,11 @@
 package org.babyfish.jimmer.client.kotlin.model
 
 import org.babyfish.jimmer.client.kotlin.KBaseEntityWithId
+import org.babyfish.jimmer.jackson.JsonConverter
+import org.babyfish.jimmer.jackson.LongListToStringListConverter
+import org.babyfish.jimmer.jackson.LongToStringConverter
 import org.babyfish.jimmer.sql.Entity
+import org.babyfish.jimmer.sql.IdView
 import org.babyfish.jimmer.sql.ManyToMany
 import org.babyfish.jimmer.sql.ManyToOne
 import java.math.BigDecimal
@@ -42,4 +46,16 @@ interface KBook : KBaseEntityWithId {
      */
     @ManyToMany
     val authors: List<KAuthor>
+
+    /**
+     * The id view of `Book.store`
+     */
+    @IdView
+    val storeId: Long?
+
+    /**
+     * The id view of `Book.authors`
+     */
+    @IdView("authors")
+    val authorIds: List<Long>
 }

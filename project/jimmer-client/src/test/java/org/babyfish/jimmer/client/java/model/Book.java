@@ -58,14 +58,12 @@ public interface Book {
     /**
      * The id view of `Book.store`
      */
-    @JsonConverter(LongToStringConverter.class)
     @IdView
     Long storeId();
 
     /**
      * The id view of `Book.authors`
      */
-    @JsonConverter(LongListToStringListConverter.class)
     @IdView("authors")
     List<Long> authorIds();
 }

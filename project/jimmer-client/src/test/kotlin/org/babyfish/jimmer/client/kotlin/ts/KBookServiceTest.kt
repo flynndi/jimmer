@@ -384,6 +384,14 @@ class KBookServiceTest {
                     "     * All authors involved in writing the work\n" +
                     "     */\n" +
                     "    readonly authors?: ReadonlyArray<Dynamic_KAuthor>;\n" +
+                    "    /**\n" +
+                    "     * The id view of `Book.store`\n" +
+                    "     */\n" +
+                    "    readonly storeId?: string;\n" +
+                    "    /**\n" +
+                    "     * The id view of `Book.authors`\n" +
+                    "     */\n" +
+                    "    readonly authorIds?: ReadonlyArray<string>;\n" +
                     "}\n",
             writer.toString()
         )

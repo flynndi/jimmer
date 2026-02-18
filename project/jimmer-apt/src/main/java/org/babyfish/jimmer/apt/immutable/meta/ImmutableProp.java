@@ -514,6 +514,16 @@ public class ImmutableProp implements BaseProp {
 
     private ConverterMetadata determineConverterMetadata() {
         AnnotationMirror jsonConverter = RecursiveAnnotations.of(executableElement, JsonConverter.class.getName());
+
+        boolean autoApply = false;
+        if (jsonConverter == null) {
+            final ImmutableProp idViewBaseProp = getIdViewBaseProp();
+            if (idViewBaseProp != null) {
+                autoApply = true;
+                jsonConverter = RecursiveAnnotations.of(idViewBaseProp.declaringType.getIdProp().executableElement, JsonConverter.class.getName());
+            }
+        }
+
         if (jsonConverter != null) {
             if (isEntityAssociation) {
                 throw new MetaException(
@@ -537,6 +547,9 @@ public class ImmutableProp implements BaseProp {
                 if (e.getKey().getSimpleName().contentEquals("value")) {
                     TypeElement converterElement = context.getElements().getTypeElement(e.getValue().getValue().toString());
                     ConverterMetadata metadata = ConverterMetadata.of(converterElement);
+                    if (autoApply && isList) {
+                        metadata = metadata.toListMetadata(context);
+                    }
                     if (!metadata.getSourceTypeName().equals(getTypeName().box())) {
                         throw new MetaException(
                                 executableElement,

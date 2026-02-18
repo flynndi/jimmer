@@ -370,6 +370,14 @@ class KOpenApiGeneratorTest {
                     "          type: array\n" +
                     "          items:\n" +
                     "            \$ref: '#/components/schemas/Dynamic_KAuthor'\n" +
+                    "        storeId:\n" +
+                    "          description: 'The id view of `Book.store`'\n" +
+                    "          type: string\n" +
+                    "        authorIds:\n" +
+                    "          description: 'The id view of `Book.authors`'\n" +
+                    "          type: array\n" +
+                    "          items:\n" +
+                    "            type: string\n" +
                     "    KBusinessException_DataIsFrozen:\n" +
                     "      type: object\n" +
                     "      properties:\n" +
@@ -866,6 +874,14 @@ class KOpenApiGeneratorTest {
                     "          type: array\n" +
                     "          items:\n" +
                     "            \$ref: '#/components/schemas/Dynamic_KAuthor'\n" +
+                    "        storeId:\n" +
+                    "          description: 'The id view of `Book.store`'\n" +
+                    "          type: string\n" +
+                    "        authorIds:\n" +
+                    "          description: 'The id view of `Book.authors`'\n" +
+                    "          type: array\n" +
+                    "          items:\n" +
+                    "            type: string\n" +
                     "    Dynamic_KAuthor:\n" +
                     "      type: object\n" +
                     "      description: The author object\n" +
